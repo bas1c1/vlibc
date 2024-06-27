@@ -62,7 +62,8 @@ VLIBCDEF void vlibc_ellipse(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, i
 
 #endif
 
-#define __VLIBC_IMPL__
+//just for test
+/*#define __VLIBC_IMPL__*/
 
 #ifdef __VLIBC_IMPL__
 
