@@ -14,6 +14,9 @@ typedef long unsigned int size_t;
 
 #define VLIBCDEF static const
 
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
+
 VLIBCDEF char* nullptr = (void*)0;
 
 typedef struct {
@@ -32,6 +35,7 @@ typedef struct {
 /*math functions*/
 VLIBCDEF int vlibc_swap(int *f, int *s);
 VLIBCDEF int vlibc_abs(int n);
+VLIBCDEF float vlibc_cross_product(VEC2D p1, VEC2D p2);
 
 VLIBCDEF uint32_t vlibc_rgba_to_hex(vlibc_rgba c);
 VLIBCDEF vlibc_rgba vlibc_hex_to_rgba(uint32_t c);
@@ -64,6 +68,10 @@ VLIBCDEF void vlibc_filled_circle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D 
 VLIBCDEF void vlibc_ellipse(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int rx, int ry);
 /*creates filled ellipse*/
 VLIBCDEF void vlibc_filled_ellipse(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int rx, int ry);
+/*creates triangle*/
+VLIBCDEF void vlibc_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, VEC2D p1, VEC2D p2, VEC2D p3);
+/*creates filled triangle*/
+VLIBCDEF void vlibc_filled_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, VEC2D p1, VEC2D p2, VEC2D p3);
 
 #endif
 
@@ -83,6 +91,10 @@ int vlibc_abs(int n) {
 	else {
 		return n;
 	}
+}
+
+float vlibc_cross_product(VEC2D p1, VEC2D p2) {
+	return p1.x * p2.y - p1.y * p2.x;
 }
 
 uint32_t vlibc_rgba_to_hex(vlibc_rgba c) {
@@ -187,68 +199,69 @@ void vlibc_circle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int r) {
 	pos.x += r;
 	pos.y += r;
 	int x = 0, y = r;
-	int d = 3 - 2 * r;
-	
-	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y+y});
-	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y+y});
-	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y-y});
-	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y-y});
-	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y+x});
-	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y+x});
-	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y-x});
-	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y-x});
-	
-	while (y >= x) {
-		x++;
-		
-		if (d > 0) {
-		    y--; 
-		    d = d + 4 * (x - y) + 10;
-		}
-		else
-		    d = d + 4 * x + 6;
-		
-		vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y+y});
-		vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y+y});
-		vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y-y});
-		vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y-y});
-		vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y+x});
-		vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y+x});
-		vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y-x});
-		vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y-x});
-	}
+    int d = 3 - 2 * r;
+    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y+y});
+    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y+y});
+    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y-y});
+    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y-y});
+    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y+x});
+    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y+x});
+    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y-x});
+    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y-x});
+    while (y >= x)
+    {
+        x++;
+
+        if (d > 0)
+        {
+            y--; 
+            d = d + 4 * (x - y) + 10;
+        }
+        else
+            d = d + 4 * x + 6;
+        vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y+y});
+    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y+y});
+    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y-y});
+    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y-y});
+    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y+x});
+    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y+x});
+    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y-x});
+    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y-x});
+    }
 }
 
 void vlibc_filled_circle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int r) {
 	pos.x += r;
 	pos.y += r;
 	int x = r;
-	int y = 0;
-	int xChange = 1 - (r << 1);
-	int yChange = 0;
-	int radiusError = 0;
-	
-	while (x >= y) {
-		for (int i = pos.x - x; i <= pos.x + x; i++) {
-		    vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y + y});
-		    vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y - y});
-		}
-		
-		for (int i = pos.x - y; i <= pos.x + y; i++) {
-		    vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y + x});
-		    vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y - x});
-		}
-		
-		y++;
-		radiusError += yChange;
-		yChange += 2;
-		
-		if (((radiusError << 1) + xChange) > 0) {
-		    x--;
-		    radiusError += xChange;
-		    xChange += 2;
-		}
-	}
+    int y = 0;
+    int xChange = 1 - (r << 1);
+    int yChange = 0;
+    int radiusError = 0;
+
+    while (x >= y)
+    {
+        for (int i = pos.x - x; i <= pos.x + x; i++)
+        {
+            vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y + y});
+            vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y - y});
+        }
+        for (int i = pos.x - y; i <= pos.x + y; i++)
+        {
+            vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y + x});
+            vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y - x});
+        }
+
+        y++;
+        radiusError += yChange;
+        yChange += 2;
+        if (((radiusError << 1) + xChange) > 0)
+        {
+            x--;
+            radiusError += xChange;
+            xChange += 2;
+        }
+    }
 }
 
 #define incx() x++, dxt += d2xt, t += dxt
@@ -324,5 +337,51 @@ void vlibc_filled_ellipse(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int
 
 #undef incx
 #undef incy
+
+void vlibc_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, VEC2D p1, VEC2D p2, VEC2D p3) {
+	p1.x += pos.x;
+	p1.y += pos.y;
+
+	p2.x += pos.x;
+	p2.y += pos.y;
+
+	p3.x += pos.x;
+	p3.y += pos.y;
+
+	vlibc_line(vlibcc, color, p1, p2);
+	vlibc_line(vlibcc, color, p2, p3);
+	vlibc_line(vlibcc, color, p3, p1);
+}
+
+void vlibc_filled_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, VEC2D p1, VEC2D p2, VEC2D p3) {
+	p1.x += pos.x;
+	p1.y += pos.y;
+
+	p2.x += pos.x;
+	p2.y += pos.y;
+
+	p3.x += pos.x;
+	p3.y += pos.y;
+
+	int maxX = MAX(p1.x, MAX(p2.x, p3.x));
+	int minX = MIN(p1.x, MIN(p2.x, p3.x));
+	int maxY = MAX(p1.y, MAX(p2.y, p3.y));
+	int minY = MIN(p1.y, MIN(p2.y, p3.y));
+
+	VEC2D vs1 = (VEC2D){p2.x - p1.x, p2.y - p1.y};
+	VEC2D vs2 = (VEC2D){p3.x - p1.x, p3.y - p1.y};
+
+	for (int x = minX; x <= maxX; x++) {
+		for (int y = minY; y <= maxY; y++) {
+			VEC2D q = (VEC2D){x - p1.x, y - p1.y};
+
+			float s = (float)vlibc_cross_product(q, vs2) / vlibc_cross_product(vs1, vs2);
+			float t = (float)vlibc_cross_product(vs1, q) / vlibc_cross_product(vs1, vs2);
+
+			if ( (s >= 0) && (t >= 0) && (s + t <= 1)) 
+				vlibc_put_pixel(vlibcc, color, (VEC2D){x, y});
+		}
+	}
+}
 
 #endif
