@@ -32,6 +32,8 @@ typedef struct {
 	uint8_t r:8, g:8, b:8, a:8;
 } vlibc_rgba;
 
+#define __vlibc_fast_put_pixel(vlibcc, color, pos) vlibcc->pixels[pos.x*vlibcc->size.x + pos.y] = vlibc_rgba_to_hex(color)
+
 /*math functions*/
 VLIBCDEF int vlibc_swap(int *f, int *s);
 VLIBCDEF int vlibc_abs(int n);
@@ -141,25 +143,24 @@ void vlibc_rect(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos1, VEC2D pos2) 
 }
 
 void vlibc_filled_rect(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos1, VEC2D pos2) {
-	uint32_t conv_c = vlibc_rgba_to_hex(color);
-
-	for (int x = pos1.x; x < pos2.x; x++) {
-		for (int y = pos1.y; y < pos2.y; y++) {
-			vlibcc->pixels[y*vlibcc->size.x + x] = conv_c;
-		}
-	}
+	vlibc_filled_triangle(vlibcc, color, (VEC2D){0, 0}, (VEC2D){pos1.x, pos1.y}, (VEC2D){pos2.x, pos1.y}, (VEC2D){pos1.x, pos2.y});
+	vlibc_filled_triangle(vlibcc, color, (VEC2D){0, 0}, (VEC2D){pos2.x, pos1.y}, (VEC2D){pos2.x, pos2.y}, (VEC2D){pos1.x, pos2.y});
 }
 
 void vlibc_row(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int width) {
 	uint32_t conv_c = vlibc_rgba_to_hex(color);
-	for (int i = 0; i < width; i++)
-		vlibcc->pixels[(pos.x+i)*vlibcc->size.x + pos.y] = conv_c;
+	for (int i = 0; i < width; i++) {
+		VEC2D p = {pos.x+i, pos.y};
+		__vlibc_fast_put_pixel(vlibcc, color, p);
+	}
 }
 
 void vlibc_column(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int height) {
 	uint32_t conv_c = vlibc_rgba_to_hex(color);
-	for (int i = 0; i < height; i++)
-		vlibcc->pixels[pos.x*vlibcc->size.x + (pos.y+height)] = conv_c;
+	for (int i = 0; i < height; i++) {
+		VEC2D p = {pos.x, pos.y+i};
+		__vlibc_fast_put_pixel(vlibcc, color, p);
+	}
 }
 
 void vlibc_line(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D start, VEC2D end) {
@@ -168,7 +169,7 @@ void vlibc_line(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D start, VEC2D end) 
     int dy = end.y - start.y;
 
     if (dx == 0 && dy == 0) {
-    	vlibcc->pixels[start.x*vlibcc->size.x + start.y] = conv_c;
+    	__vlibc_fast_put_pixel(vlibcc, color, start);
         return;
     }
 
@@ -180,7 +181,8 @@ void vlibc_line(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D start, VEC2D end) 
 
         for (int x = start.x; x <= end.x; ++x) {
             int y = dy*(x - start.x)/dx + start.y;
-            vlibcc->pixels[x*vlibcc->size.x + y] = conv_c;
+            VEC2D p = {x, y};
+            __vlibc_fast_put_pixel(vlibcc, color, p);
         }
     } else {
         if (start.y > end.y) {
@@ -190,7 +192,8 @@ void vlibc_line(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D start, VEC2D end) 
 
         for (int y = start.y; y <= end.y; ++y) {
             int x = dx*(y - start.y)/dy + start.x;
-            vlibcc->pixels[x*vlibcc->size.x + y] = conv_c;
+            VEC2D p = {x, y};
+            __vlibc_fast_put_pixel(vlibcc, color, p);
         }
     }
 }
@@ -200,14 +203,22 @@ void vlibc_circle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int r) {
 	pos.y += r;
 	int x = 0, y = r;
     int d = 3 - 2 * r;
-    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y+y});
-    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y+y});
-    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y-y});
-    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y-y});
-    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y+x});
-    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y+x});
-    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y-x});
-    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y-x});
+    VEC2D p = {pos.x+x, pos.y+y};
+    __vlibc_fast_put_pixel(vlibcc, color, p);
+    p = (VEC2D){pos.x-x, pos.y+y};
+    __vlibc_fast_put_pixel(vlibcc, color, p);
+    p = (VEC2D){pos.x+x, pos.y-y};
+    __vlibc_fast_put_pixel(vlibcc, color, p);
+    p = (VEC2D){pos.x-x, pos.y-y};
+    __vlibc_fast_put_pixel(vlibcc, color, p);
+    p = (VEC2D){pos.x+y, pos.y+x};
+    __vlibc_fast_put_pixel(vlibcc, color, p);
+    p = (VEC2D){pos.x-y, pos.y+x};
+    __vlibc_fast_put_pixel(vlibcc, color, p);
+    p = (VEC2D){pos.x+y, pos.y-x};
+    __vlibc_fast_put_pixel(vlibcc, color, p);
+    p = (VEC2D){pos.x-y, pos.y-x};
+    __vlibc_fast_put_pixel(vlibcc, color, p);
     while (y >= x)
     {
         x++;
@@ -219,14 +230,22 @@ void vlibc_circle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int r) {
         }
         else
             d = d + 4 * x + 6;
-        vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y+y});
-    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y+y});
-    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y-y});
-    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y-y});
-    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y+x});
-    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y+x});
-    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y-x});
-    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y-x});
+        p = (VEC2D){pos.x+x, pos.y+y};
+		__vlibc_fast_put_pixel(vlibcc, color, p);
+		p = (VEC2D){pos.x-x, pos.y+y};
+		__vlibc_fast_put_pixel(vlibcc, color, p);
+		p = (VEC2D){pos.x+x, pos.y-y};
+		__vlibc_fast_put_pixel(vlibcc, color, p);
+		p = (VEC2D){pos.x-x, pos.y-y};
+		__vlibc_fast_put_pixel(vlibcc, color, p);
+		p = (VEC2D){pos.x+y, pos.y+x};
+		__vlibc_fast_put_pixel(vlibcc, color, p);
+		p = (VEC2D){pos.x-y, pos.y+x};
+		__vlibc_fast_put_pixel(vlibcc, color, p);
+		p = (VEC2D){pos.x+y, pos.y-x};
+		__vlibc_fast_put_pixel(vlibcc, color, p);
+		p = (VEC2D){pos.x-y, pos.y-x};
+		__vlibc_fast_put_pixel(vlibcc, color, p);
     }
 }
 
@@ -239,17 +258,23 @@ void vlibc_filled_circle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int 
     int yChange = 0;
     int radiusError = 0;
 
+    VEC2D p = {0, 0};
+
     while (x >= y)
     {
         for (int i = pos.x - x; i <= pos.x + x; i++)
         {
-            vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y + y});
-            vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y - y});
+        	p = (VEC2D){i, pos.y + y};
+            __vlibc_fast_put_pixel(vlibcc, color, p);
+            p = (VEC2D){i, pos.y - y};
+            __vlibc_fast_put_pixel(vlibcc, color, p);
         }
         for (int i = pos.x - y; i <= pos.x + y; i++)
         {
-            vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y + x});
-            vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y - x});
+        	p = (VEC2D){i, pos.y + x};
+            __vlibc_fast_put_pixel(vlibcc, color, p);
+            p = (VEC2D){i, pos.y - x};
+            __vlibc_fast_put_pixel(vlibcc, color, p);
         }
 
         y++;
@@ -279,13 +304,20 @@ void vlibc_ellipse(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int rx, in
 	long dxt = 2*b2*x, dyt = -2*a2*y;
 	long d2xt = 2*b2, d2yt = 2*a2;
 
+	VEC2D p = {0, 0};
+
 	while (y>=0 && x<=rx) {
-		vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y+y});
-		if (x!=0 || y!=0)
-			vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y-y});
+		p = (VEC2D){pos.x+x, pos.y+y};
+		__vlibc_fast_put_pixel(vlibcc, color, p);
+		if (x!=0 || y!=0) {
+			p = (VEC2D){pos.x-x, pos.y-y};
+			__vlibc_fast_put_pixel(vlibcc, color, p);
+		}
 		if (x!=0 && y!=0) {
-			vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y-y});
-			vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y+y});
+			p = (VEC2D){pos.x+x, pos.y-y};
+			__vlibc_fast_put_pixel(vlibcc, color, p);
+			p = (VEC2D){pos.x-x, pos.y+y};
+			__vlibc_fast_put_pixel(vlibcc, color, p);
 		}
 		if (t + b2*x <= crit1 || t + a2*y <= crit3)
 			incx();
@@ -378,8 +410,11 @@ void vlibc_filled_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, VE
 			float s = (float)vlibc_cross_product(q, vs2) / vlibc_cross_product(vs1, vs2);
 			float t = (float)vlibc_cross_product(vs1, q) / vlibc_cross_product(vs1, vs2);
 
-			if ( (s >= 0) && (t >= 0) && (s + t <= 1)) 
-				vlibc_put_pixel(vlibcc, color, (VEC2D){x, y});
+			VEC2D p = {x, y};
+
+			if ( (s >= 0) && (t >= 0) && (s + t <= 1)) {
+				__vlibc_fast_put_pixel(vlibcc, color, p);
+			}
 		}
 	}
 }
