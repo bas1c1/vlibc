@@ -187,69 +187,68 @@ void vlibc_circle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int r) {
 	pos.x += r;
 	pos.y += r;
 	int x = 0, y = r;
-    int d = 3 - 2 * r;
-    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y+y});
-    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y+y});
-    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y-y});
-    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y-y});
-    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y+x});
-    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y+x});
-    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y-x});
-    vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y-x});
-    while (y >= x)
-    {
-        x++;
-
-        if (d > 0)
-        {
-            y--; 
-            d = d + 4 * (x - y) + 10;
-        }
-        else
-            d = d + 4 * x + 6;
-        vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y+y});
-    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y+y});
-    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y-y});
-    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y-y});
-    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y+x});
-    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y+x});
-    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y-x});
-    	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y-x});
-    }
+	int d = 3 - 2 * r;
+	
+	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y+y});
+	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y+y});
+	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y-y});
+	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y-y});
+	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y+x});
+	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y+x});
+	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y-x});
+	vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y-x});
+	
+	while (y >= x) {
+		x++;
+		
+		if (d > 0) {
+		    y--; 
+		    d = d + 4 * (x - y) + 10;
+		}
+		else
+		    d = d + 4 * x + 6;
+		
+		vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y+y});
+		vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y+y});
+		vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+x, pos.y-y});
+		vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-x, pos.y-y});
+		vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y+x});
+		vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y+x});
+		vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x+y, pos.y-x});
+		vlibc_put_pixel(vlibcc, color, (VEC2D){pos.x-y, pos.y-x});
+	}
 }
 
 void vlibc_filled_circle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int r) {
 	pos.x += r;
 	pos.y += r;
 	int x = r;
-    int y = 0;
-    int xChange = 1 - (r << 1);
-    int yChange = 0;
-    int radiusError = 0;
-
-    while (x >= y)
-    {
-        for (int i = pos.x - x; i <= pos.x + x; i++)
-        {
-            vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y + y});
-            vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y - y});
-        }
-        for (int i = pos.x - y; i <= pos.x + y; i++)
-        {
-            vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y + x});
-            vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y - x});
-        }
-
-        y++;
-        radiusError += yChange;
-        yChange += 2;
-        if (((radiusError << 1) + xChange) > 0)
-        {
-            x--;
-            radiusError += xChange;
-            xChange += 2;
-        }
-    }
+	int y = 0;
+	int xChange = 1 - (r << 1);
+	int yChange = 0;
+	int radiusError = 0;
+	
+	while (x >= y) {
+		for (int i = pos.x - x; i <= pos.x + x; i++) {
+		    vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y + y});
+		    vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y - y});
+		}
+		
+		for (int i = pos.x - y; i <= pos.x + y; i++) {
+		    vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y + x});
+		    vlibc_put_pixel(vlibcc, color, (VEC2D){i, pos.y - x});
+		}
+		
+		y++;
+		radiusError += yChange;
+		yChange += 2;
+		
+		if (((radiusError << 1) + xChange) > 0) {
+		    x--;
+		    radiusError += xChange;
+		    xChange += 2;
+		}
+	}
 }
 
 #define incx() x++, dxt += d2xt, t += dxt
