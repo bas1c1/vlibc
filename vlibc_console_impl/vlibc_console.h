@@ -35,16 +35,16 @@ int vlibc_console_to_grayscale(vlibc_rgba c) {
 }
 
 char vlibc_console_character_grayscale(int gray_scale) {
-    if (gray_scale > 225) return '@';
-    if (gray_scale > 200) return '%';
-    if (gray_scale > 175) return '#';
-    if (gray_scale > 150) return '*';
-    if (gray_scale > 125) return '+';
-    if (gray_scale > 100) return '=';
-    if (gray_scale > 75) return '-';
-    if (gray_scale > 50) return ':';
-    if (gray_scale > 5) return '.';
-    return ' ';
+	if (gray_scale > 225) return '@';
+	if (gray_scale > 200) return '%';
+	if (gray_scale > 175) return '#';
+	if (gray_scale > 150) return '*';
+	if (gray_scale > 125) return '+';
+	if (gray_scale > 100) return '=';
+	if (gray_scale > 75) return '-';
+	if (gray_scale > 50) return ':';
+	if (gray_scale > 5) return '.';
+	return ' ';
 }
 
 void vlibc_console_flush_canvas(vlibc_canvas canvas) {
