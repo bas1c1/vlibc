@@ -6,17 +6,17 @@
 #ifndef __VLIBC_CONSOLE__
 #define __VLIBC_CONSOLE__
 
-vlibc_canvas vlibc_console_alloc_canvas(VEC2D size);
-int vlibc_console_to_grayscale(vlibc_rgba c);
-char vlibc_console_character_grayscale(int gray_scale);
-void vlibc_console_flush_canvas(vlibc_canvas canvas);
+VLIBCDEF vlibc_canvas vlibc_console_alloc_canvas(VEC2D size);
+VLIBCDEF int vlibc_console_to_grayscale(vlibc_rgba c);
+VLIBCDEF char vlibc_console_character_grayscale(int gray_scale);
+VLIBCDEF void vlibc_console_flush_canvas(vlibc_canvas canvas);
 
 #endif
 
 #ifdef __VLIBC_CONSOLE_IMPL__
 
 vlibc_canvas vlibc_console_alloc_canvas(VEC2D size) {
-	vlibc_swap(&size.x, &size.y);
+	printf("width: %d height: %d\n", size.x, size.y);
 
 	uint32_t *graph = (uint32_t*)malloc((size.x+1)*(size.y+1)*(sizeof(uint32_t)));
 
