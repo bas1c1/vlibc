@@ -34,7 +34,7 @@ void display() {
 	v6.pos = (VEC2D){390, 0};
 	v6.col = (vlibc_rgba){255, 255, 255, 255};
 
-	vlibc_vertex vertices[] = {v0, v1, v2, v3, v4, v5, v6};
+	vlibc_vertex vertices[7] = {v0, v1, v2, v3, v4, v5, v6};
 
 	vlibc_filled_figure(&canvas, (vlibc_rgba){255, 255, 255, 255}, (VEC2D){0, 0}, vertices, 7, &frag_shader);
 	vlibc_sdl_flush_canvas(canvas);
