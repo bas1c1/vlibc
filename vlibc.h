@@ -1,11 +1,13 @@
 #ifndef __VLIBC__
 #define __VLIBC__
 
-/*typedef unsigned char uint8_t;
+#ifndef __TINYC__
+typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
 typedef unsigned long uint64_t;
-typedef long unsigned int size_t;*/
+typedef long unsigned int size_t;
+#endif
 
 #define UINT8_TT /* uint8_t */;
 #define UINT16_TT /* uint16_t */;
