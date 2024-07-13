@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
 	v5.pos = (VEC2D){29, 19};
 	v5.col = (vlibc_rgba){255, 0, 255, 255};
 
-	vlibc_vertex vertices[] = {v0, v1, v2, v3, v4, v5};
+	vlibc_vertex vertices[6] = {v0, v1, v2, v3, v4, v5};
 
 	vlibc_filled_figure(&canvas, (vlibc_rgba){255, 255, 255, 255}, (VEC2D){0, 0}, vertices, 6, &frag_shader);
 

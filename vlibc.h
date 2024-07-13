@@ -1,11 +1,11 @@
 #ifndef __VLIBC__
 #define __VLIBC__
 
-typedef unsigned char uint8_t;
+/*typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
 typedef unsigned long uint64_t;
-typedef long unsigned int size_t;
+typedef long unsigned int size_t;*/
 
 #define UINT8_TT /* uint8_t */;
 #define UINT16_TT /* uint16_t */;
@@ -526,7 +526,7 @@ void vlibc_filled_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, vl
 	VEC2D vs1 = (VEC2D){p2.pos.x - p1.pos.x, p2.pos.y - p1.pos.y};
 	VEC2D vs2 = (VEC2D){p3.pos.x - p1.pos.x, p3.pos.y - p1.pos.y};
 
-	vlibc_vertex nvertices[] = {p1, p2, p3};
+	vlibc_vertex nvertices[3] = {p1, p2, p3};
 
 	for (int x = minX; x <= maxX; x++) {
 		for (int y = minY; y <= maxY; y++) {
