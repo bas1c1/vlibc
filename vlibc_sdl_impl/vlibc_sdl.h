@@ -22,7 +22,7 @@ SDL_Renderer *__vlibc_sdl_renderer;
 SDL_Window *__vlibc_sdl_window;
 
 vlibc_canvas vlibc_sdl_alloc_canvas(VEC2D size) {
-	printf("width: %d height: %d\n", size.x, size.y);
+	printf("width: %d height: %d\n", (int)size.x, (int)size.y);
 
 	uint32_t *graph = (uint32_t*)malloc((size.x+1)*(size.y+1)*(sizeof(uint32_t)));
 

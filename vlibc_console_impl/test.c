@@ -4,12 +4,12 @@
 #define WIDTH 30
 #define HEIGHT 30
 
-uint32_t frag_shader_f(vlibc_vertex *vertices, int num_of_vertices, VEC2D pos, vlibc_rgba color) {
-	return vlibc_rgba_to_hex(color);
+uint32_t frag_shader_f(vlibc_fragment_shader_t* this, vlibc_vertex* vertices, int num_of_vertices, VEC2D frag_pos, vlibc_rgba frag_color) {
+	return vlibc_rgba_to_hex(frag_color);
 }
 
 int main(int argc, char *argv[]) {
-	vlibc_fragment_shader_t frag_shader = vlibc_create_fragment_shader(frag_shader_f);
+	vlibc_fragment_shader_t frag_shader = vlibc_create_fragment_shader(frag_shader_f, nullptr, 0);
 
 	vlibc_canvas canvas = vlibc_console_alloc_canvas((VEC2D){WIDTH, HEIGHT});
 
