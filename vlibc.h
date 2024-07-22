@@ -181,15 +181,27 @@ int vlibc_shader_data_parse_int(float *shader_data, int index) {
 }
 
 VEC2D vlibc_shader_data_parse_vec2d(float *shader_data, int index) {
-
+	return (VEC2D) {
+		.x = *(shader_data+index),
+		.y = *(shader_data+index+1),
+	};
 }
 
 VEC3D vlibc_shader_data_parse_vec3d(float *shader_data, int index) {
-
+	return (VEC3D) {
+		.x = *(shader_data+index),
+		.y = *(shader_data+index+1),
+		.z = *(shader_data+index+2),
+	};
 }
 
 vlibc_rgba vlibc_shader_data_parse_rgba(float *shader_data, int index) {
-
+	return (vlibc_rgba) {
+		.r = *(shader_data+index),
+		.g = *(shader_data+index+1),
+		.b = *(shader_data+index+2),
+		.a = *(shader_data+index+3),
+	};
 }
 
 vlibc_rgba vlibc_mix_colors(vlibc_rgba c1, vlibc_rgba c2) {

@@ -5,9 +5,9 @@
 #define HEIGHT 400
 
 uint32_t frag_shader_f(vlibc_fragment_shader_t* this, vlibc_vertex* vertices, int num_of_vertices, VEC2D frag_pos, vlibc_rgba frag_color) {
-	vlibc_rgba color = vlibc_mix_colors(frag_color, vlibc_shader_data_parse_rgba(this->shader_data, 0));
+	vlibc_rgba color = vlibc_mix_colors(frag_color, vlibc_shader_data_parse_rgba(this->shader_data, 4));
 
-	return vlibc_rgba_to_hex(color);
+	return vlibc_rgba_to_hex(vlibc_shader_data_parse_rgba(this->shader_data, 0));
 }
 
 vlibc_fragment_shader_t frag_shader;
