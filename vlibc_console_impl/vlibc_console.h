@@ -1,5 +1,6 @@
 #define __VLIBC_IMPL__
 #include <stdio.h>
+#include <stdlib.h>
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #endif
@@ -22,7 +23,7 @@ VLIBCDEF void vlibc_console_clear_screen();
 vlibc_canvas vlibc_console_alloc_canvas(vlibc_vec2d size) {
 	printf("width: %d height: %d\n", (int)size.x, (int)size.y);
 
-	uint32_t *graph = (uint32_t*)malloc((size.x+1)*(size.y+1)*(sizeof(uint32_t)));
+	vlibc_uint32_t *graph = (vlibc_uint32_t*)malloc((size.x+1)*(size.y+1)*(sizeof(vlibc_uint32_t)));
 
 	vlibc_canvas canvas = {
 		.pixels = graph,

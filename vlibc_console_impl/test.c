@@ -4,7 +4,7 @@
 #define WIDTH 40
 #define HEIGHT 30
 
-uint32_t frag_shader_f(vlibc_fragment_shader_t* this, vlibc_vertex* vertices, int num_of_vertices, vlibc_vec2d frag_pos, vlibc_rgba frag_color) {
+vlibc_uint32_t frag_shader_f(vlibc_fragment_shader_t* this, vlibc_vertex* vertices, int num_of_vertices, vlibc_vec2d frag_pos, vlibc_rgba frag_color) {
 	return vlibc_rgba_to_hex(frag_color);
 }
 

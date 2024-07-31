@@ -24,7 +24,7 @@ SDL_Window *__vlibc_sdl_window;
 vlibc_canvas vlibc_sdl_alloc_canvas(vlibc_vec2d size) {
 	printf("width: %d height: %d\n", (int)size.x, (int)size.y);
 
-	uint32_t *graph = (uint32_t*)malloc((size.x+1)*(size.y+1)*(sizeof(uint32_t)));
+	vlibc_uint32_t *graph = (vlibc_uint32_t*)malloc((size.x+1)*(size.y+1)*(sizeof(vlibc_uint32_t)));
 
 	vlibc_canvas canvas = {
 		.pixels = graph,
