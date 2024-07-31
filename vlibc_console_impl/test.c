@@ -41,5 +41,5 @@ int main(int argc, char *argv[]) {
 
 	vlibc_filled_figure(&canvas, (vlibc_rgba){255, 255, 255, 255}, (vlibc_vec2d){0, 0}, vertices, 7, &frag_shader);
 
-	vlibc_console_flush_canvas(canvas);
+	vlibc_console_flush_canvas(&canvas);
 }

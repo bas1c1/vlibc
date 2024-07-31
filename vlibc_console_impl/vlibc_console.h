@@ -12,7 +12,7 @@
 VLIBCDEF vlibc_canvas vlibc_console_alloc_canvas(vlibc_vec2d size);
 VLIBCDEF int vlibc_console_to_grayscale(vlibc_rgba c);
 VLIBCDEF char vlibc_console_character_grayscale(int gray_scale);
-VLIBCDEF void vlibc_console_flush_canvas(vlibc_canvas canvas);
+VLIBCDEF void vlibc_console_flush_canvas(vlibc_canvas *canvas);
 VLIBCDEF void vlibc_console_cursor_gotoxy(int x, int y);
 VLIBCDEF void vlibc_console_clear_screen();
 
@@ -68,16 +68,16 @@ char vlibc_console_character_grayscale(int gray_scale) {
 	return ' ';
 }
 
-void vlibc_console_flush_canvas(vlibc_canvas canvas) {
+void vlibc_console_flush_canvas(vlibc_canvas *canvas) {
 	vlibc_console_clear_screen();
-	for (int i = 0; i < canvas.size.x; i++) {
-		for (int j = 0; j < canvas.size.y; j++) {
+	for (int i = 0; i < canvas->size.x; i++) {
+		for (int j = 0; j < canvas->size.y; j++) {
 			vlibc_console_cursor_gotoxy(i, j);
 			putchar(
 				vlibc_console_character_grayscale(
 					vlibc_console_to_grayscale(
 						vlibc_hex_to_rgba(
-							vlibc_get_pixel(&canvas, ((vlibc_vec2d){i, j}), 0)
+							vlibc_get_pixel(canvas, ((vlibc_vec2d){i, j}), 0)
 						)
 					)
 				)

@@ -26,6 +26,12 @@ enum { false, true };
 #define NULL '\0'
 #endif
 
+#define VLIBC_PI 3.141592653589793
+#define VLIBC_HALF_PI 1.570796326794897
+#define VLIBC_DOUBLE_PI 6.283185307179586
+#define VLIBC_SIN_CURVE_A 0.0415896
+#define VLIBC_SIN_CURVE_B 0.00129810625032
+
 typedef struct {
 	float x, y;
 } vlibc_vec2d;
@@ -40,7 +46,7 @@ typedef struct {
 } vlibc_canvas;
 
 typedef struct {
-	vlibc_uint8_t r:8, g:8, b:8, a:8;
+	vlibc_uint8_t r, g, b, a;
 } vlibc_rgba;
 
 typedef struct {
@@ -67,6 +73,16 @@ VLIBCDEF int vlibc_swap(int *f, int *s);
 VLIBCDEF float vlibc_swap_float(float *f, float *s);
 VLIBCDEF float vlibc_cross_product(vlibc_vec2d p1, vlibc_vec2d p2);
 VLIBCDEF float vlibc_edge(vlibc_vec2d p1, vlibc_vec2d p2, vlibc_vec2d p);
+VLIBCDEF float vlibc_saturate(float x);
+VLIBCDEF float vlibc_smoothstep(float a, float b, float x);
+VLIBCDEF int vlibc_step(float x, float num);
+VLIBCDEF double vlibc_pow(double a, double b);
+VLIBCDEF double vlibc_fact(double x);
+VLIBCDEF double vlibc_sin(double x);
+VLIBCDEF double vlibc_cos(double x);
+VLIBCDEF float vlibc_rsqrt(float x);
+VLIBCDEF float vlibc_sqrt(float x);
+VLIBCDEF float vlibc_length(vlibc_vec2d p);
 VLIBCDEF bool vlibc_in_bounds(vlibc_canvas *vlibcc, vlibc_vec2d p);
 
 VLIBCDEF vlibc_uint32_t vlibc_rgba_to_hex(vlibc_rgba c);
@@ -147,6 +163,115 @@ vlibc_rgba vlibc_hex_to_rgba(vlibc_uint32_t c) {
 	return *(vlibc_rgba*)&c;
 }
 
+float vlibc_saturate(float x) {
+	return VLIBC_MAX(0, VLIBC_MIN(1, x));
+}
+
+float vlibc_smoothstep(float a, float b, float x) {
+	float t = vlibc_saturate((x - a)/(b - a));
+    return t*t*(3.0 - (2.0*t));
+}
+
+int vlibc_step(float x, float num) {
+	return x > num ? 0 : 1;
+}
+
+double vlibc_pow(double a, double b) {
+    double c = 1;
+    for (int i=0; i<b; i++)
+        c *= a;
+    return c;
+}
+
+double vlibc_fact(double x) {
+    double ret = 1;
+    for (int i=1; i<=x; i++) 
+        ret *= i;
+    return ret;
+}
+
+/*i know this is super weird but it very fast*/
+double vlibc_sin(double x) {
+    x *= 0.63661977236758134308;
+	int sign = x < 0.0;
+	x = sign ? -x : x;
+	int xf = (int)x;
+	x -= xf;
+	if ((xf & 1) == 1)
+		x = 1 - x;
+	int per = (xf >> 1) & 1;
+	double y;
+	if (x <= 0.5)
+	{
+		double xx = x * x;
+		y = x * (1.5707963267948965822 + xx * (-0.6459640975062407217 +
+			xx * (0.07969262624592800593 + xx * (-0.0046817541307639977752 +
+			xx * (0.00016044114022967599853 + xx * (-3.5986097146969802712e-6 +
+			5.629793865626169033e-8 * xx))))));
+	}
+	else
+	{
+		x = 1.0 - x;
+		double xx = x * x;
+		y = 1.0 - xx * (1.2337005501361513498 + xx * (-0.25366950789986513871 +
+			xx * (0.020863480734953519901 + xx * (-0.0009192599500952791151 +
+			xx * (0.000025200135454917479526 - 4.6552987291490935821e-7 * xx)))));
+	}
+	return sign ^ per ? -y : y;
+}
+
+double vlibc_cos(double x) {
+	if (x < 0) {
+        int q = -x / VLIBC_DOUBLE_PI;
+        q += 1;
+        double y = q * VLIBC_DOUBLE_PI;
+        x = -(x - y);
+    }
+    if (x >= VLIBC_DOUBLE_PI) {
+        int q = x / VLIBC_DOUBLE_PI;
+        double y = q * VLIBC_DOUBLE_PI;
+        x = x - y;
+    }
+    int s = 1;
+    if (x >= VLIBC_PI) {
+        s = -1;
+        x -= VLIBC_PI;
+    }
+    if (x > VLIBC_HALF_PI) {
+        x = VLIBC_PI - x;
+        s = -s;
+    }
+    double z = x * x;
+    double r = z * (z * (VLIBC_SIN_CURVE_A - VLIBC_SIN_CURVE_B * z) - 0.5) + 1.0;
+    if (r > 1.0) r = r - 2.0;
+    if (s > 0) return r;
+    else return -r;
+}
+
+/*the legendary quake float Q_rsqrt( float number )*/
+float vlibc_rsqrt(float x) {
+	long i;
+    float x2, y;
+    const float threehalfs = 1.5F;
+
+    x2 = x * 0.5F;
+    y  = x;
+    i  = * ( long * ) &y;
+    i  = 0x5f3759df - ( i >> 1 );
+    y  = * ( float * ) &i;
+    y  = y * ( threehalfs - ( x2 * y * y ) );
+
+    return y;
+}
+
+float vlibc_sqrt(float x) {
+    return 1/vlibc_rsqrt(x);
+}
+
+float vlibc_length(vlibc_vec2d p) {
+	return vlibc_sqrt(p.x*p.x + p.y*p.y);
+}
+
 bool vlibc_in_bounds(vlibc_canvas *vlibcc, vlibc_vec2d p) {
 	if (p.x > vlibcc->size.x || p.y > vlibcc->size.y || p.x < 0 || p.y < 0) return false;
 	return true;
@@ -172,11 +297,11 @@ vlibc_fragment_shader_t vlibc_create_fragment_shader(vlibc_uint32_t (*func)(stru
 
 vlibc_vec2d vlibc_calc_uv(vlibc_vec2d frag_pos, vlibc_vec2d resolution) {
 	vlibc_vec2d uv = (vlibc_vec2d) {
-		.x = frag_pos.x/resolution.x,
-		.y = frag_pos.y/resolution.y
+		.x = frag_pos.x/resolution.x * 2,
+		.y = frag_pos.y/resolution.y * 2
 	};
-	uv.x -= 0.5;
-	uv.y -= 0.5;
+	uv.x -= 1;
+	uv.y -= 1;
 	uv.x *= resolution.x/resolution.y;
 	return uv;
 }

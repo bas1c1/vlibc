@@ -1,6 +1,7 @@
 #define __VLIBC_IMPL__
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <SDL2/SDL.h>
 #include "../vlibc.h"
 
@@ -10,11 +11,14 @@
 VLIBCDEF vlibc_canvas vlibc_sdl_alloc_canvas(vlibc_vec2d size);
 VLIBCDEF void vlibc_sdl_create_window(char *window_name, int width, int height);
 VLIBCDEF void vlibc_sdl_start(void (*display_function)());
-VLIBCDEF void vlibc_sdl_flush_canvas(vlibc_canvas canvas);
+VLIBCDEF void vlibc_sdl_flush_canvas(vlibc_canvas *canvas);
 
 #endif
 
 #ifdef __VLIBC_SDL_IMPL__
+
+static uint64_t __vlibc_sdl_time = 0;
+static float vlibc_sdl_deltaTime = 0;
 
 SDL_Event __vlibc_sdl_event;
 SDL_Renderer *__vlibc_sdl_renderer;
@@ -47,28 +51,38 @@ void vlibc_sdl_create_window(char *window_name, int width, int height) {
 	SDL_RenderClear(__vlibc_sdl_renderer);
 }
 
-void vlibc_sdl_flush_canvas(vlibc_canvas canvas) {
+void vlibc_sdl_flush_canvas(vlibc_canvas *canvas) {
+	SDL_Texture* framebuffer = SDL_CreateTexture(__vlibc_sdl_renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, canvas->size.x, canvas->size.y);
+
+	SDL_UpdateTexture(framebuffer , NULL, canvas->pixels, canvas->size.x * sizeof (uint32_t));
+
 	SDL_RenderClear(__vlibc_sdl_renderer);
-
-	/*i know that this is slow, but it's the only working code*/
-
-	for (int i = 0; i < canvas.size.x; i++) {
-		for (int j = 0; j < canvas.size.y; j++) {
-			vlibc_rgba col = vlibc_hex_to_rgba( vlibc_get_pixel(&canvas, ((vlibc_vec2d){i, j}), 0) );
-			SDL_SetRenderDrawColor(__vlibc_sdl_renderer, col.r, col.g, col.b, col.a);
-			SDL_RenderDrawPoint(__vlibc_sdl_renderer, i, j);
-		}
-	}
+	SDL_RenderCopy(__vlibc_sdl_renderer, framebuffer , NULL, NULL);
 
 	SDL_RenderPresent(__vlibc_sdl_renderer);
 }
 
 void vlibc_sdl_start(void (*display_function)()) {
+	clock_t current_ticks;
+	uint64_t fps = 0;
+
 	while (1) {
 		if (SDL_PollEvent(&__vlibc_sdl_event) && __vlibc_sdl_event.type == SDL_QUIT)
 			break;
 
+		current_ticks = clock();
+
 		display_function();
+
+		vlibc_sdl_deltaTime = clock() - current_ticks;
+    	if(vlibc_sdl_deltaTime > 0)
+        	fps = CLOCKS_PER_SEC / vlibc_sdl_deltaTime;
+
+        printf("FPS: %d\n", fps);
+
+		if (__vlibc_sdl_time >= (uint64_t)-1)
+			__vlibc_sdl_time = 0;
+		__vlibc_sdl_time ++;
 	}
 	SDL_DestroyRenderer(__vlibc_sdl_renderer);
 	SDL_DestroyWindow(__vlibc_sdl_window);
