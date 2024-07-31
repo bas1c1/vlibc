@@ -5,8 +5,13 @@
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
-typedef unsigned long uint64_t;
-typedef long unsigned int size_t;
+typedef unsigned long long uint64_t;
+typedef unsigned int size_t;
+#endif
+
+#ifndef bool
+typedef int bool;
+enum { false, true };
 #endif
 
 #define UINT8_TT /* uint8_t */;
@@ -19,19 +24,26 @@ typedef long unsigned int size_t;
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
+#define SIGN(T, a) ((T)(a > 0) - (T)(a < 0))
+#define ABS(T, a) (SIGN(T, a)*a)
+
 #define nullptr ((void*)0)
+
+#ifndef NULL
+#define NULL '\0'
+#endif
 
 typedef struct {
 	float x, y;
-} VEC2D;
+} vlibc_vec2d;
 
 typedef struct {
 	float x, y, z;
-} VEC3D;
+} vlibc_vec3d;
 
 typedef struct {
 	uint32_t *pixels;
-	VEC2D size;
+	vlibc_vec2d size;
 } vlibc_canvas;
 
 typedef struct {
@@ -39,74 +51,81 @@ typedef struct {
 } vlibc_rgba;
 
 typedef struct {
-	VEC2D pos;
+	vlibc_vec2d pos;
 	vlibc_rgba col;
 } vlibc_vertex;
 
 typedef struct vlibc_fragment_shader{
 	float *shader_data;
 	size_t shader_data_size;
-	uint32_t (*func)(struct vlibc_fragment_shader *this, vlibc_vertex* vertices, int num_of_vertices, VEC2D frag_pos, vlibc_rgba frag_color);
+	uint32_t (*func)(struct vlibc_fragment_shader *this, vlibc_vertex* vertices, int num_of_vertices, vlibc_vec2d frag_pos, vlibc_rgba frag_color);
 } vlibc_fragment_shader_t;
 
-#define __vlibc_fast_put_pixel(vlibcc, color, pos) vlibcc->pixels[(int)(pos.y*vlibcc->size.x + pos.x)] = vlibc_rgba_to_hex(color)
+#define __vlibc_fast_put_pixel(vlibcc, color, pos) if (vlibc_in_bounds(vlibcc, pos) == true) { vlibcc->pixels[(int)(pos.y*vlibcc->size.x + pos.x)] = vlibc_rgba_to_hex(color); }
+
+#define VLIBC_VEC2D_NULL ((vlibc_vec2d){0, 0})
+#define VLIBC_VEC3D_NULL ((vlibc_vec3d){0, 0})
+#define VLIBC_RGBA_NULL ((vlibc_rgba){0, 0})
+#define VLIBC_VERTEX_NULL ((vlibc_vertex){VLIBC_VEC2D_NULL, VLIBC_RGBA_NULL})
+#define VLIBC_CANVAS_NULL ((vlibc_canvas){nullptr, VLIBC_VEC2D_NULL})
 
 /*math functions*/
 VLIBCDEF int vlibc_swap(int *f, int *s);
 VLIBCDEF float vlibc_swap_float(float *f, float *s);
-VLIBCDEF int vlibc_abs(int n);
-VLIBCDEF float vlibc_cross_product(VEC2D p1, VEC2D p2);
-VLIBCDEF float vlibc_edge(VEC2D p1, VEC2D p2, VEC2D p);
+VLIBCDEF float vlibc_cross_product(vlibc_vec2d p1, vlibc_vec2d p2);
+VLIBCDEF float vlibc_edge(vlibc_vec2d p1, vlibc_vec2d p2, vlibc_vec2d p);
+VLIBCDEF bool vlibc_in_bounds(vlibc_canvas *vlibcc, vlibc_vec2d p);
 
 VLIBCDEF uint32_t vlibc_rgba_to_hex(vlibc_rgba c);
 VLIBCDEF vlibc_rgba vlibc_hex_to_rgba(uint32_t c);
 
 /*shader functions*/
-VLIBCDEF vlibc_fragment_shader_t vlibc_create_fragment_shader(uint32_t (*func)(struct vlibc_fragment_shader *, vlibc_vertex*, int, VEC2D, vlibc_rgba), float *shader_data, size_t shader_data_size);
-VLIBCDEF VEC2D vlibc_calc_uv(VEC2D frag_pos, VEC2D resolution);
+VLIBCDEF vlibc_fragment_shader_t vlibc_create_fragment_shader(uint32_t (*func)(struct vlibc_fragment_shader *, vlibc_vertex*, int, vlibc_vec2d, vlibc_rgba), float *shader_data, size_t shader_data_size);
+VLIBCDEF vlibc_vec2d vlibc_calc_uv(vlibc_vec2d frag_pos, vlibc_vec2d resolution);
 VLIBCDEF int vlibc_shader_data_parse_int(float *shader_data, int index);
-VLIBCDEF VEC2D vlibc_shader_data_parse_vec2d(float *shader_data, int index);
-VLIBCDEF VEC3D vlibc_shader_data_parse_vec3d(float *shader_data, int index);
+VLIBCDEF vlibc_vec2d vlibc_shader_data_parse_vec2d(float *shader_data, int index);
+VLIBCDEF vlibc_vec3d vlibc_shader_data_parse_vec3d(float *shader_data, int index);
 VLIBCDEF vlibc_rgba vlibc_shader_data_parse_rgba(float *shader_data, int index);
 
 /*gets average of red, green, blue and alpha and multiplies it by weight*/
 VLIBCDEF vlibc_rgba vlibc_mix_colors(vlibc_rgba c1, vlibc_rgba c2);
 /*puts a pixel on position*/
-VLIBCDEF void vlibc_put_pixel(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos);
+VLIBCDEF void vlibc_put_pixel(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos);
 /*gets a pixel on position*/
-VLIBCDEF uint32_t vlibc_get_pixel(vlibc_canvas *vlibcc, VEC2D pos, int inversion);
+VLIBCDEF uint32_t vlibc_get_pixel(vlibc_canvas *vlibcc, vlibc_vec2d pos, int inversion);
 /*fills entire canvas with one color*/
 VLIBCDEF void vlibc_fill(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_fragment_shader_t *shader);
 /*creates rect without filling it*/
-VLIBCDEF void vlibc_rect(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos1, VEC2D pos2, vlibc_fragment_shader_t *shader);
+VLIBCDEF void vlibc_rect(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos1, vlibc_vec2d pos2, vlibc_fragment_shader_t *shader);
 /*creates filled rect*/
-VLIBCDEF void vlibc_filled_rect(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D position, vlibc_vertex *vertices, vlibc_fragment_shader_t *shader);
+VLIBCDEF void vlibc_filled_rect(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d position, vlibc_vertex *vertices, vlibc_fragment_shader_t *shader);
 /*creates row*/
-VLIBCDEF void vlibc_row(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int width, vlibc_fragment_shader_t *shader);
+VLIBCDEF void vlibc_row(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, int width, vlibc_fragment_shader_t *shader);
 /*creates column*/
-VLIBCDEF void vlibc_column(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int height, vlibc_fragment_shader_t *shader);
+VLIBCDEF void vlibc_column(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, int height, vlibc_fragment_shader_t *shader);
 /*creates line*/
-VLIBCDEF void vlibc_line(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D start, VEC2D end, vlibc_fragment_shader_t *shader);
+VLIBCDEF void vlibc_line(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d start, vlibc_vec2d end, vlibc_fragment_shader_t *shader);
 /*creates circle*/
-VLIBCDEF void vlibc_circle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int r, vlibc_fragment_shader_t *shader);
+VLIBCDEF void vlibc_circle(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, int r, vlibc_fragment_shader_t *shader);
 /*creates filled circle*/
-VLIBCDEF void vlibc_filled_circle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int r, vlibc_fragment_shader_t *shader);
+VLIBCDEF void vlibc_filled_circle(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, int r, vlibc_fragment_shader_t *shader);
 /*creates ellipse*/
-VLIBCDEF void vlibc_ellipse(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int rx, int ry, vlibc_fragment_shader_t *shader);
+VLIBCDEF void vlibc_ellipse(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, int rx, int ry, vlibc_fragment_shader_t *shader);
 /*creates filled ellipse*/
-VLIBCDEF void vlibc_filled_ellipse(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int rx, int ry, vlibc_fragment_shader_t *shader);
+VLIBCDEF void vlibc_filled_ellipse(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, int rx, int ry, vlibc_fragment_shader_t *shader);
 /*creates triangle*/
-VLIBCDEF void vlibc_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, VEC2D p1, VEC2D p2, VEC2D p3, vlibc_fragment_shader_t *shader);
+VLIBCDEF void vlibc_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, vlibc_vec2d p1, vlibc_vec2d p2, vlibc_vec2d p3, vlibc_fragment_shader_t *shader);
 /*creates filled triangle*/
-VLIBCDEF void vlibc_filled_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, vlibc_vertex *vertices, vlibc_fragment_shader_t *shader);
+VLIBCDEF void vlibc_filled_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, vlibc_vertex *vertices, vlibc_fragment_shader_t *shader);
 /*creates figure with filled triangles*/
-VLIBCDEF void vlibc_filled_figure(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, vlibc_vertex *vertices, int num_of_vertices, vlibc_fragment_shader_t *shader);
+VLIBCDEF void vlibc_filled_figure(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, vlibc_vertex *vertices, int num_of_vertices, vlibc_fragment_shader_t *shader);
 
 #endif
 
 #ifdef __VLIBC_IMPL__
 
 int vlibc_swap(int *f, int *s) {
+	if (f == nullptr && s == nullptr) return -1;
 	int t = 0;
 	t = *f;
 	*f = *s;
@@ -115,6 +134,7 @@ int vlibc_swap(int *f, int *s) {
 }
 
 float vlibc_swap_float(float *f, float *s) {
+	if (f == nullptr && s == nullptr) return -1;
 	float t = 0;
 	t = *f;
 	*f = *s;
@@ -122,16 +142,7 @@ float vlibc_swap_float(float *f, float *s) {
 	return t;
 }
 
-int vlibc_abs(int n) {
-	if (n < 0) {
-		return n - n*2;
-	}
-	else {
-		return n;
-	}
-}
-
-float vlibc_cross_product(VEC2D p1, VEC2D p2) {
+float vlibc_cross_product(vlibc_vec2d p1, vlibc_vec2d p2) {
 	return p1.x * p2.y - p1.y * p2.x;
 }
 
@@ -143,9 +154,14 @@ vlibc_rgba vlibc_hex_to_rgba(uint32_t c) {
 	return *(vlibc_rgba*)&c;
 }
 
-float vlibc_edge(VEC2D p1, VEC2D p2, VEC2D p) {
-	VEC2D a = p;
-	VEC2D b = p2;
+bool vlibc_in_bounds(vlibc_canvas *vlibcc, vlibc_vec2d p) {
+	if (p.x > vlibcc->size.x || p.y > vlibcc->size.y || p.x < 0 || p.y < 0) return false;
+	return true;
+}
+
+float vlibc_edge(vlibc_vec2d p1, vlibc_vec2d p2, vlibc_vec2d p) {
+	vlibc_vec2d a = p;
+	vlibc_vec2d b = p2;
 	a.x -= p1.x;
 	a.y -= p1.y;
 	b.x -= p1.x;
@@ -153,7 +169,7 @@ float vlibc_edge(VEC2D p1, VEC2D p2, VEC2D p) {
 	return a.x * b.y - a.y * b.x;
 }
 
-vlibc_fragment_shader_t vlibc_create_fragment_shader(uint32_t (*func)(struct vlibc_fragment_shader *, vlibc_vertex*, int, VEC2D, vlibc_rgba), float *shader_data, size_t shader_data_size) {
+vlibc_fragment_shader_t vlibc_create_fragment_shader(uint32_t (*func)(struct vlibc_fragment_shader *, vlibc_vertex*, int, vlibc_vec2d, vlibc_rgba), float *shader_data, size_t shader_data_size) {
 	return (vlibc_fragment_shader_t) {
 		.shader_data = shader_data,
 		.shader_data_size = shader_data_size,
@@ -161,8 +177,8 @@ vlibc_fragment_shader_t vlibc_create_fragment_shader(uint32_t (*func)(struct vli
 	};
 }
 
-VEC2D vlibc_calc_uv(VEC2D frag_pos, VEC2D resolution) {
-	VEC2D uv = (VEC2D) {
+vlibc_vec2d vlibc_calc_uv(vlibc_vec2d frag_pos, vlibc_vec2d resolution) {
+	vlibc_vec2d uv = (vlibc_vec2d) {
 		.x = frag_pos.x/resolution.x,
 		.y = frag_pos.y/resolution.y
 	};
@@ -173,22 +189,25 @@ VEC2D vlibc_calc_uv(VEC2D frag_pos, VEC2D resolution) {
 }
 
 int vlibc_shader_data_parse_int(float *shader_data, int index) {
+	if (shader_data == NULL) return -1;
 	float x = *(shader_data+index);
 	return 
-		x>=0
-			?(int)(x+0.5)
-			:(int)(x-0.5);
+		x >= 0
+			?(int)(x + 0.5)
+			:(int)(x - 0.5);
 }
 
-VEC2D vlibc_shader_data_parse_vec2d(float *shader_data, int index) {
-	return (VEC2D) {
+vlibc_vec2d vlibc_shader_data_parse_vec2d(float *shader_data, int index) {
+	if (shader_data == NULL) return VLIBC_VEC2D_NULL;
+	return (vlibc_vec2d) {
 		.x = *(shader_data+index),
 		.y = *(shader_data+index+1),
 	};
 }
 
-VEC3D vlibc_shader_data_parse_vec3d(float *shader_data, int index) {
-	return (VEC3D) {
+vlibc_vec3d vlibc_shader_data_parse_vec3d(float *shader_data, int index) {
+	if (shader_data == NULL) return VLIBC_VEC3D_NULL;
+	return (vlibc_vec3d) {
 		.x = *(shader_data+index),
 		.y = *(shader_data+index+1),
 		.z = *(shader_data+index+2),
@@ -196,6 +215,7 @@ VEC3D vlibc_shader_data_parse_vec3d(float *shader_data, int index) {
 }
 
 vlibc_rgba vlibc_shader_data_parse_rgba(float *shader_data, int index) {
+	if (shader_data == NULL) return VLIBC_RGBA_NULL;
 	return (vlibc_rgba) {
 		.r = *(shader_data+index),
 		.g = *(shader_data+index+1),
@@ -213,22 +233,27 @@ vlibc_rgba vlibc_mix_colors(vlibc_rgba c1, vlibc_rgba c2) {
 	return output;
 }
 
-void vlibc_put_pixel(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos) {
+void vlibc_put_pixel(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos) {
+	if (vlibcc == nullptr) return;
+	if (vlibc_in_bounds(vlibcc, pos) == false) return;
 	vlibcc->pixels[(int)(pos.x*vlibcc->size.x + pos.y)] = vlibc_rgba_to_hex(color);
 }
 
-uint32_t vlibc_get_pixel(vlibc_canvas *vlibcc, VEC2D pos, int inversion) {
+uint32_t vlibc_get_pixel(vlibc_canvas *vlibcc, vlibc_vec2d pos, int inversion) {
+	if (vlibcc == nullptr) return -1;
+	if (vlibc_in_bounds(vlibcc, pos) == false) return -1;
 	if (inversion == 1)
 		return vlibcc->pixels[(int)(pos.x*vlibcc->size.x + pos.y)];
 	return vlibcc->pixels[(int)(pos.y*vlibcc->size.x + pos.x)];
 }
 
 void vlibc_fill(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_fragment_shader_t *shader) {
+	if (vlibcc == nullptr) return;
 	uint32_t conv_c = vlibc_rgba_to_hex(color);
 	if (shader) {
 		for (size_t x = 0; x < vlibcc->size.x; x++) {
 			for (size_t y = 0; y < vlibcc->size.y; y++) {
-				VEC2D p = (VEC2D){x, y};
+				vlibc_vec2d p = (vlibc_vec2d){x, y};
 				__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
 			}
 		}
@@ -240,51 +265,56 @@ void vlibc_fill(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_fragment_shader_t 
 	}
 }
 
-void vlibc_rect(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos1, VEC2D pos2, vlibc_fragment_shader_t *shader) {
+void vlibc_rect(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos1, vlibc_vec2d pos2, vlibc_fragment_shader_t *shader) {
+	if (vlibcc == nullptr) return;
 	uint32_t conv_c = vlibc_rgba_to_hex(color);
-	vlibc_line(vlibcc, color, (VEC2D){pos1.x, pos1.y}, (VEC2D){pos2.x, pos1.y}, shader);
-	vlibc_line(vlibcc, color, (VEC2D){pos1.x, pos1.y}, (VEC2D){pos1.x, pos2.y}, shader);
-	vlibc_line(vlibcc, color, (VEC2D){pos1.x, pos2.y}, (VEC2D){pos2.x, pos2.y}, shader);
-	vlibc_line(vlibcc, color, (VEC2D){pos2.x, pos1.y}, (VEC2D){pos2.x, pos2.y}, shader);
+	vlibc_line(vlibcc, color, (vlibc_vec2d){pos1.x, pos1.y}, (vlibc_vec2d){pos2.x, pos1.y}, shader);
+	vlibc_line(vlibcc, color, (vlibc_vec2d){pos1.x, pos1.y}, (vlibc_vec2d){pos1.x, pos2.y}, shader);
+	vlibc_line(vlibcc, color, (vlibc_vec2d){pos1.x, pos2.y}, (vlibc_vec2d){pos2.x, pos2.y}, shader);
+	vlibc_line(vlibcc, color, (vlibc_vec2d){pos2.x, pos1.y}, (vlibc_vec2d){pos2.x, pos2.y}, shader);
 }
 
-void vlibc_filled_rect(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D position, vlibc_vertex *vertices, vlibc_fragment_shader_t *shader) {
+void vlibc_filled_rect(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d position, vlibc_vertex *vertices, vlibc_fragment_shader_t *shader) {
+	if (vlibcc == nullptr) return;
 	vlibc_filled_triangle(vlibcc, color, position, vertices, shader);
 	vlibc_filled_triangle(vlibcc, color, position, vertices + 1, shader);
 }
 
-void vlibc_row(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int width, vlibc_fragment_shader_t *shader) {
+void vlibc_row(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, int width, vlibc_fragment_shader_t *shader) {
+	if (vlibcc == nullptr) return;
 	uint32_t conv_c = vlibc_rgba_to_hex(color);
 	if (shader) {
 		for (int i = 0; i < width; i++) {
-			VEC2D p = {pos.x+i, pos.y};
+			vlibc_vec2d p = {pos.x+i, pos.y};
 			__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
 		}
 	} else {
 		for (int i = 0; i < width; i++) {
-			VEC2D p = {pos.x+i, pos.y};
+			vlibc_vec2d p = {pos.x+i, pos.y};
 			__vlibc_fast_put_pixel(vlibcc, color, p);
 		}
 	}
 }
 
-void vlibc_column(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int height, vlibc_fragment_shader_t *shader) {
+void vlibc_column(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, int height, vlibc_fragment_shader_t *shader) {
+	if (vlibcc == nullptr) return;
 	uint32_t conv_c = vlibc_rgba_to_hex(color);
 	
 	if (shader) {
 		for (int i = 0; i < height; i++) {
-			VEC2D p = {pos.x, pos.y+i};
+			vlibc_vec2d p = {pos.x, pos.y+i};
 			__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
 		}
 	} else {
 		for (int i = 0; i < height; i++) {
-			VEC2D p = {pos.x, pos.y+i};
+			vlibc_vec2d p = {pos.x, pos.y+i};
 			__vlibc_fast_put_pixel(vlibcc, color, p);
 		}
 	}
 }
 
-void vlibc_line(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D start, VEC2D end, vlibc_fragment_shader_t *shader) {
+void vlibc_line(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d start, vlibc_vec2d end, vlibc_fragment_shader_t *shader) {
+	if (vlibcc == nullptr) return;
 	int dx = end.x - start.x;
 	int dy = end.y - start.y;
 
@@ -296,19 +326,19 @@ void vlibc_line(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D start, VEC2D end, 
 		return;
 	}
 
-	if (vlibc_abs(dx) > vlibc_abs(dy)) {
+	if (ABS(int, dx) > ABS(int, dy)) {
 		if (start.x > end.x) {
 			vlibc_swap_float(&start.x, &end.x);
 			vlibc_swap_float(&start.y, &end.y);
 		}
 		if (shader) {
 			for (int x = start.x; x <= end.x; ++x) {
-				VEC2D p = {x, dy*(x - start.x)/dx + start.y};
+				vlibc_vec2d p = {x, dy*(x - start.x)/dx + start.y};
 				__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
 			}
 		} else {
 			for (int x = start.x; x <= end.x; ++x) {
-				VEC2D p = {x, dy*(x - start.x)/dx + start.y};
+				vlibc_vec2d p = {x, dy*(x - start.x)/dx + start.y};
 				__vlibc_fast_put_pixel(vlibcc, color, p);
 			}
 		}
@@ -319,39 +349,61 @@ void vlibc_line(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D start, VEC2D end, 
 		}
 		if (shader) {
 			for (int y = start.y; y <= end.y; ++y) {
-				VEC2D p = {dx*(y - start.y)/dy + start.x, y};
+				vlibc_vec2d p = {dx*(y - start.y)/dy + start.x, y};
 				__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
 			}
 		} else {
 			for (int y = start.y; y <= end.y; ++y) {
-				VEC2D p = {dx*(y - start.y)/dy + start.x, y};
+				vlibc_vec2d p = {dx*(y - start.y)/dy + start.x, y};
 				__vlibc_fast_put_pixel(vlibcc, color, p);
 			}
 		}
 	}
 }
 
-void vlibc_circle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int r, vlibc_fragment_shader_t *shader) {
+void vlibc_circle(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, int r, vlibc_fragment_shader_t *shader) {
+	if (vlibcc == nullptr) return;
 	pos.x += r;
 	pos.y += r;
 	int x = 0, y = r;
 	int d = 3 - 2 * r;
-	VEC2D p = {pos.x+x, pos.y+y};
+
+	if (shader) {
+		vlibc_vec2d p = {pos.x+x, pos.y+y};
+		__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
+		p = (vlibc_vec2d){pos.x-x, pos.y+y};
+		__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
+		p = (vlibc_vec2d){pos.x+x, pos.y-y};
+		__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
+		p = (vlibc_vec2d){pos.x-x, pos.y-y};
+		__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
+		p = (vlibc_vec2d){pos.x+y, pos.y+x};
+		__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
+		p = (vlibc_vec2d){pos.x-y, pos.y+x};
+		__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
+		p = (vlibc_vec2d){pos.x+y, pos.y-x};
+		__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
+		p = (vlibc_vec2d){pos.x-y, pos.y-x};
+		__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
+	}
+
+	vlibc_vec2d p = {pos.x+x, pos.y+y};
 	__vlibc_fast_put_pixel(vlibcc, color, p);
-	p = (VEC2D){pos.x-x, pos.y+y};
+	p = (vlibc_vec2d){pos.x-x, pos.y+y};
 	__vlibc_fast_put_pixel(vlibcc, color, p);
-	p = (VEC2D){pos.x+x, pos.y-y};
+	p = (vlibc_vec2d){pos.x+x, pos.y-y};
 	__vlibc_fast_put_pixel(vlibcc, color, p);
-	p = (VEC2D){pos.x-x, pos.y-y};
+	p = (vlibc_vec2d){pos.x-x, pos.y-y};
 	__vlibc_fast_put_pixel(vlibcc, color, p);
-	p = (VEC2D){pos.x+y, pos.y+x};
+	p = (vlibc_vec2d){pos.x+y, pos.y+x};
 	__vlibc_fast_put_pixel(vlibcc, color, p);
-	p = (VEC2D){pos.x-y, pos.y+x};
+	p = (vlibc_vec2d){pos.x-y, pos.y+x};
 	__vlibc_fast_put_pixel(vlibcc, color, p);
-	p = (VEC2D){pos.x+y, pos.y-x};
+	p = (vlibc_vec2d){pos.x+y, pos.y-x};
 	__vlibc_fast_put_pixel(vlibcc, color, p);
-	p = (VEC2D){pos.x-y, pos.y-x};
+	p = (vlibc_vec2d){pos.x-y, pos.y-x};
 	__vlibc_fast_put_pixel(vlibcc, color, p);
+
 	while (y >= x)
 	{
 		x++;
@@ -363,26 +415,47 @@ void vlibc_circle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int r, vlib
 		}
 		else
 			d = d + 4 * x + 6;
-		p = (VEC2D){pos.x+x, pos.y+y};
+
+		if (shader) {
+			p = (vlibc_vec2d){pos.x+x, pos.y+y};
+			__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
+			p = (vlibc_vec2d){pos.x-x, pos.y+y};
+			__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
+			p = (vlibc_vec2d){pos.x+x, pos.y-y};
+			__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
+			p = (vlibc_vec2d){pos.x-x, pos.y-y};
+			__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
+			p = (vlibc_vec2d){pos.x+y, pos.y+x};
+			__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
+			p = (vlibc_vec2d){pos.x-y, pos.y+x};
+			__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
+			p = (vlibc_vec2d){pos.x+y, pos.y-x};
+			__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
+			p = (vlibc_vec2d){pos.x-y, pos.y-x};
+			__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
+		}
+
+		p = (vlibc_vec2d){pos.x+x, pos.y+y};
 		__vlibc_fast_put_pixel(vlibcc, color, p);
-		p = (VEC2D){pos.x-x, pos.y+y};
+		p = (vlibc_vec2d){pos.x-x, pos.y+y};
 		__vlibc_fast_put_pixel(vlibcc, color, p);
-		p = (VEC2D){pos.x+x, pos.y-y};
+		p = (vlibc_vec2d){pos.x+x, pos.y-y};
 		__vlibc_fast_put_pixel(vlibcc, color, p);
-		p = (VEC2D){pos.x-x, pos.y-y};
+		p = (vlibc_vec2d){pos.x-x, pos.y-y};
 		__vlibc_fast_put_pixel(vlibcc, color, p);
-		p = (VEC2D){pos.x+y, pos.y+x};
+		p = (vlibc_vec2d){pos.x+y, pos.y+x};
 		__vlibc_fast_put_pixel(vlibcc, color, p);
-		p = (VEC2D){pos.x-y, pos.y+x};
+		p = (vlibc_vec2d){pos.x-y, pos.y+x};
 		__vlibc_fast_put_pixel(vlibcc, color, p);
-		p = (VEC2D){pos.x+y, pos.y-x};
+		p = (vlibc_vec2d){pos.x+y, pos.y-x};
 		__vlibc_fast_put_pixel(vlibcc, color, p);
-		p = (VEC2D){pos.x-y, pos.y-x};
+		p = (vlibc_vec2d){pos.x-y, pos.y-x};
 		__vlibc_fast_put_pixel(vlibcc, color, p);
 	}
 }
 
-void vlibc_filled_circle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int r, vlibc_fragment_shader_t *shader) {
+void vlibc_filled_circle(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, int r, vlibc_fragment_shader_t *shader) {
+	if (vlibcc == nullptr) return;
 	pos.x += r;
 	pos.y += r;
 	int x = r;
@@ -391,34 +464,34 @@ void vlibc_filled_circle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int 
 	int yChange = 0;
 	int radiusError = 0;
 
-	VEC2D p;
+	vlibc_vec2d p;
 
 	while (x >= y)
 	{
 		if (shader) {
 			for (int i = pos.x - x; i <= pos.x + x; i++) {
-				p = (VEC2D){i, pos.y + y};
+				p = (vlibc_vec2d){i, pos.y + y};
 				__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
-				p = (VEC2D){i, pos.y - y};
+				p = (vlibc_vec2d){i, pos.y - y};
 				__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
 			}
 			for (int i = pos.x - y; i <= pos.x + y; i++) {
-				p = (VEC2D){i, pos.y + x};
+				p = (vlibc_vec2d){i, pos.y + x};
 				__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
-				p = (VEC2D){i, pos.y - x};
+				p = (vlibc_vec2d){i, pos.y - x};
 				__vlibc_fast_put_pixel(vlibcc, vlibc_hex_to_rgba(shader->func(shader, nullptr, 0, p, color)), p);
 			}
 		} else {
 			for (int i = pos.x - x; i <= pos.x + x; i++) {
-				p = (VEC2D){i, pos.y + y};
+				p = (vlibc_vec2d){i, pos.y + y};
 				__vlibc_fast_put_pixel(vlibcc, color, p);
-				p = (VEC2D){i, pos.y - y};
+				p = (vlibc_vec2d){i, pos.y - y};
 				__vlibc_fast_put_pixel(vlibcc, color, p);
 			}
 			for (int i = pos.x - y; i <= pos.x + y; i++) {
-				p = (VEC2D){i, pos.y + x};
+				p = (vlibc_vec2d){i, pos.y + x};
 				__vlibc_fast_put_pixel(vlibcc, color, p);
-				p = (VEC2D){i, pos.y - x};
+				p = (vlibc_vec2d){i, pos.y - x};
 				__vlibc_fast_put_pixel(vlibcc, color, p);
 			}
 		}
@@ -438,7 +511,8 @@ void vlibc_filled_circle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int 
 #define incx() x++, dxt += d2xt, t += dxt
 #define incy() y--, dyt += d2yt, t += dyt
 
-void vlibc_ellipse(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int rx, int ry, vlibc_fragment_shader_t *shader) {
+void vlibc_ellipse(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, int rx, int ry, vlibc_fragment_shader_t *shader) {
+	if (vlibcc == nullptr) return;
 	pos.x += rx;
 	pos.y += ry;
 	int x = 0, y = ry;
@@ -450,20 +524,20 @@ void vlibc_ellipse(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int rx, in
 	long dxt = 2*b2*x, dyt = -2*a2*y;
 	long d2xt = 2*b2, d2yt = 2*a2;
 
-	VEC2D p = {0, 0};
+	vlibc_vec2d p = {0, 0};
 
 	if (shader) {
 		while (y>=0 && x<=rx) {
-			p = (VEC2D){pos.x+x, pos.y+y};
+			p = (vlibc_vec2d){pos.x+x, pos.y+y};
 			__vlibc_fast_put_pixel(vlibcc, color, p);
 			if (x!=0 || y!=0) {
-				p = (VEC2D){pos.x-x, pos.y-y};
+				p = (vlibc_vec2d){pos.x-x, pos.y-y};
 				__vlibc_fast_put_pixel(vlibcc, color, p);
 			}
 			if (x!=0 && y!=0) {
-				p = (VEC2D){pos.x+x, pos.y-y};
+				p = (vlibc_vec2d){pos.x+x, pos.y-y};
 				__vlibc_fast_put_pixel(vlibcc, color, p);
-				p = (VEC2D){pos.x-x, pos.y+y};
+				p = (vlibc_vec2d){pos.x-x, pos.y+y};
 				__vlibc_fast_put_pixel(vlibcc, color, p);
 			}
 			if (t + b2*x <= crit1 || t + a2*y <= crit3)
@@ -477,16 +551,16 @@ void vlibc_ellipse(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int rx, in
 		}
 	} else {
 		while (y>=0 && x<=rx) {
-			p = (VEC2D){pos.x+x, pos.y+y};
+			p = (vlibc_vec2d){pos.x+x, pos.y+y};
 			__vlibc_fast_put_pixel(vlibcc, color, p);
 			if (x!=0 || y!=0) {
-				p = (VEC2D){pos.x-x, pos.y-y};
+				p = (vlibc_vec2d){pos.x-x, pos.y-y};
 				__vlibc_fast_put_pixel(vlibcc, color, p);
 			}
 			if (x!=0 && y!=0) {
-				p = (VEC2D){pos.x+x, pos.y-y};
+				p = (vlibc_vec2d){pos.x+x, pos.y-y};
 				__vlibc_fast_put_pixel(vlibcc, color, p);
-				p = (VEC2D){pos.x-x, pos.y+y};
+				p = (vlibc_vec2d){pos.x-x, pos.y+y};
 				__vlibc_fast_put_pixel(vlibcc, color, p);
 			}
 			if (t + b2*x <= crit1 || t + a2*y <= crit3)
@@ -501,7 +575,8 @@ void vlibc_ellipse(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int rx, in
 	}
 }
 
-void vlibc_filled_ellipse(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int rx, int ry, vlibc_fragment_shader_t *shader) {
+void vlibc_filled_ellipse(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, int rx, int ry, vlibc_fragment_shader_t *shader) {
+	if (vlibcc == nullptr) return;
 	pos.x += rx;
 	pos.y += ry;
 	int x = 0, y = ry;
@@ -520,28 +595,29 @@ void vlibc_filled_ellipse(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, int
 			width += 2;
 		}
 		else if (t - a2*y > crit2) {
-			vlibc_row(vlibcc, color, (VEC2D){pos.x-x, pos.y-y}, width, shader);
+			vlibc_row(vlibcc, color, (vlibc_vec2d){pos.x-x, pos.y-y}, width, shader);
 			if (y!=0)
-				vlibc_row(vlibcc, color, (VEC2D){pos.x-x, pos.y+y}, width, shader);
+				vlibc_row(vlibcc, color, (vlibc_vec2d){pos.x-x, pos.y+y}, width, shader);
 			incy();
 		}
 		else {
-			vlibc_row(vlibcc, color, (VEC2D){pos.x-x, pos.y-y}, width, shader);
+			vlibc_row(vlibcc, color, (vlibc_vec2d){pos.x-x, pos.y-y}, width, shader);
 			if (y!=0)
-				vlibc_row(vlibcc, color, (VEC2D){pos.x-x, pos.y+y}, width, shader);
+				vlibc_row(vlibcc, color, (vlibc_vec2d){pos.x-x, pos.y+y}, width, shader);
 			incx();
 			incy();
 			width += 2;
 		}
 	}
 	if (ry == 0)
-		vlibc_row(vlibcc, color, (VEC2D){pos.x-rx, pos.y}, 2*rx+1, shader);
+		vlibc_row(vlibcc, color, (vlibc_vec2d){pos.x-rx, pos.y}, 2*rx+1, shader);
 }
 
 #undef incx
 #undef incy
 
-void vlibc_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, VEC2D p1, VEC2D p2, VEC2D p3, vlibc_fragment_shader_t *shader) {
+void vlibc_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, vlibc_vec2d p1, vlibc_vec2d p2, vlibc_vec2d p3, vlibc_fragment_shader_t *shader) {
+	if (vlibcc == nullptr) return;
 	p1.x += pos.x;
 	p1.y += pos.y;
 
@@ -556,7 +632,8 @@ void vlibc_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, VEC2D p1,
 	vlibc_line(vlibcc, color, p3, p1, shader);
 }
 
-void vlibc_filled_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, vlibc_vertex *vertices, vlibc_fragment_shader_t *shader) {
+void vlibc_filled_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, vlibc_vertex *vertices, vlibc_fragment_shader_t *shader) {
+	if (vlibcc == nullptr) return;
 	vlibc_vertex p1 = vertices[0];
 	vlibc_vertex p2 = vertices[1];
 	vlibc_vertex p3 = vertices[2];
@@ -579,19 +656,19 @@ void vlibc_filled_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, vl
 	int maxY = MAX(p1.pos.y, MAX(p2.pos.y, p3.pos.y));
 	int minY = MIN(p1.pos.y, MIN(p2.pos.y, p3.pos.y));
 
-	VEC2D vs1 = (VEC2D){p2.pos.x - p1.pos.x, p2.pos.y - p1.pos.y};
-	VEC2D vs2 = (VEC2D){p3.pos.x - p1.pos.x, p3.pos.y - p1.pos.y};
+	vlibc_vec2d vs1 = (vlibc_vec2d){p2.pos.x - p1.pos.x, p2.pos.y - p1.pos.y};
+	vlibc_vec2d vs2 = (vlibc_vec2d){p3.pos.x - p1.pos.x, p3.pos.y - p1.pos.y};
 
 	vlibc_vertex nvertices[3] = {p1, p2, p3};
 
 	for (int x = minX; x <= maxX; x++) {
 		for (int y = minY; y <= maxY; y++) {
-			VEC2D q = (VEC2D){x - p1.pos.x, y - p1.pos.y};
+			vlibc_vec2d q = (vlibc_vec2d){x - p1.pos.x, y - p1.pos.y};
 
 			float s = (float)vlibc_cross_product(q, vs2) / vlibc_cross_product(vs1, vs2);
 			float t = (float)vlibc_cross_product(vs1, q) / vlibc_cross_product(vs1, vs2);
 
-			VEC2D p = {x, y};
+			vlibc_vec2d p = {x, y};
 
 			if ( (s >= 0) && (t >= 0) && (s + t <= 1)) {
 				if (shader) {
@@ -621,7 +698,8 @@ void vlibc_filled_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, vl
 	}
 }
 
-void vlibc_filled_figure(vlibc_canvas* vlibcc, vlibc_rgba color, VEC2D pos, vlibc_vertex *vertices, int num_of_vertices, vlibc_fragment_shader_t *shader) {
+void vlibc_filled_figure(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, vlibc_vertex *vertices, int num_of_vertices, vlibc_fragment_shader_t *shader) {
+	if (vlibcc == nullptr) return;
 	for (size_t i = 0; i+2 < num_of_vertices; i++) {
 		vlibc_filled_triangle(vlibcc, color, pos, vertices+i, shader);
 	}

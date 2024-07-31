@@ -8,7 +8,7 @@
 #ifndef __VLIBC_SDL__
 #define __VLIBC_SDL__
 
-VLIBCDEF vlibc_canvas vlibc_sdl_alloc_canvas(VEC2D size);
+VLIBCDEF vlibc_canvas vlibc_sdl_alloc_canvas(vlibc_vec2d size);
 VLIBCDEF void vlibc_sdl_create_window(char *window_name, int width, int height);
 VLIBCDEF void vlibc_sdl_start(void (*display_function)());
 VLIBCDEF void vlibc_sdl_flush_canvas(vlibc_canvas canvas);
@@ -21,7 +21,7 @@ SDL_Event __vlibc_sdl_event;
 SDL_Renderer *__vlibc_sdl_renderer;
 SDL_Window *__vlibc_sdl_window;
 
-vlibc_canvas vlibc_sdl_alloc_canvas(VEC2D size) {
+vlibc_canvas vlibc_sdl_alloc_canvas(vlibc_vec2d size) {
 	printf("width: %d height: %d\n", (int)size.x, (int)size.y);
 
 	uint32_t *graph = (uint32_t*)malloc((size.x+1)*(size.y+1)*(sizeof(uint32_t)));
@@ -55,7 +55,7 @@ void vlibc_sdl_flush_canvas(vlibc_canvas canvas) {
 
 	for (int i = 0; i < canvas.size.x; i++) {
 		for (int j = 0; j < canvas.size.y; j++) {
-			vlibc_rgba col = vlibc_hex_to_rgba( vlibc_get_pixel(&canvas, ((VEC2D){i, j}), 0) );
+			vlibc_rgba col = vlibc_hex_to_rgba( vlibc_get_pixel(&canvas, ((vlibc_vec2d){i, j}), 0) );
 			SDL_SetRenderDrawColor(__vlibc_sdl_renderer, col.r, col.g, col.b, col.a);
 			SDL_RenderDrawPoint(__vlibc_sdl_renderer, i, j);
 		}

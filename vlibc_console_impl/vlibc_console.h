@@ -6,7 +6,7 @@
 #ifndef __VLIBC_CONSOLE__
 #define __VLIBC_CONSOLE__
 
-VLIBCDEF vlibc_canvas vlibc_console_alloc_canvas(VEC2D size);
+VLIBCDEF vlibc_canvas vlibc_console_alloc_canvas(vlibc_vec2d size);
 VLIBCDEF int vlibc_console_to_grayscale(vlibc_rgba c);
 VLIBCDEF char vlibc_console_character_grayscale(int gray_scale);
 VLIBCDEF void vlibc_console_flush_canvas(vlibc_canvas canvas);
@@ -15,7 +15,7 @@ VLIBCDEF void vlibc_console_flush_canvas(vlibc_canvas canvas);
 
 #ifdef __VLIBC_CONSOLE_IMPL__
 
-vlibc_canvas vlibc_console_alloc_canvas(VEC2D size) {
+vlibc_canvas vlibc_console_alloc_canvas(vlibc_vec2d size) {
 	vlibc_swap_float(&size.x, &size.y);
 
 	printf("width: %d height: %d\n", (int)size.x, (int)size.y);
@@ -54,7 +54,7 @@ void vlibc_console_flush_canvas(vlibc_canvas canvas) {
 				vlibc_console_character_grayscale(
 					vlibc_console_to_grayscale(
 						vlibc_hex_to_rgba(
-							vlibc_get_pixel(&canvas, ((VEC2D){i, j}), 1)
+							vlibc_get_pixel(&canvas, ((vlibc_vec2d){i, j}), 1)
 						)
 					)
 				)
