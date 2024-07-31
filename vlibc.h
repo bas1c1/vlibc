@@ -2,22 +2,27 @@
 #define __VLIBC__
 
 #ifndef __TINYC__
+#ifndef uint8_t
 typedef unsigned char uint8_t;
+#endif
+#ifndef uint16_t
 typedef unsigned short uint16_t;
+#endif
+#ifndef uint32_t
 typedef unsigned int uint32_t;
-typedef unsigned long long uint64_t;
+#endif
+#ifndef uint64_t
+typedef unsigned long int uint64_t;
+#endif
+#ifndef size_t
 typedef unsigned int size_t;
+#endif
 #endif
 
 #ifndef bool
 typedef int bool;
 enum { false, true };
 #endif
-
-#define UINT8_TT /* uint8_t */;
-#define UINT16_TT /* uint16_t */;
-#define UINT32_TT /* uint32_t */;
-#define UINT64_TT /* uint64_t */;
 
 #define VLIBCDEF static const
 
