@@ -9,11 +9,11 @@ vlibc_uint32_t frag_shader_f(vlibc_fragment_shader_t* this, vlibc_vertex* vertic
 }
 
 int main(int argc, char *argv[]) {
-	vlibc_fragment_shader_t frag_shader = vlibc_create_fragment_shader(frag_shader_f, nullptr, 0);
+	vlibc_fragment_shader_t frag_shader = vlibc_create_fragment_shader(frag_shader_f, vlibc_nullptr, 0);
 
 	vlibc_canvas canvas = vlibc_console_alloc_canvas((vlibc_vec2d){WIDTH, HEIGHT});
 
-	vlibc_fill(&canvas, VLIBC_RGBA_NULL, nullptr);
+	vlibc_fill(&canvas, VLIBC_RGBA_NULL, vlibc_nullptr);
 
 	vlibc_vertex v6, v5, v4, v3, v2, v1, v0;
 	v0.pos = (vlibc_vec2d){0, 0};
