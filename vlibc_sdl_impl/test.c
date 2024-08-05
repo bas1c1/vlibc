@@ -61,7 +61,7 @@ vlibc_vec3d calcNormal(vlibc_vec3d p) {
     return vlibc_normalize3(f);
 }
 
-vlibc_uint32_t frag_shader_f(vlibc_vec2d frag_pos, vlibc_rgba frag_color, vlibc_shader_data_t data) {
+vlibc_uint32_t frag_shader_f(vlibc_vec2d frag_pos, vlibc_rgba frag_color, vlibc_shader_data_t *data) {
 	vlibc_vec2d uv = vlibc_calc_uv(frag_pos, canvas.size);
 	vlibc_vec3d final_col = VLIBC_VEC3D_NULL;
 
@@ -92,7 +92,7 @@ vlibc_uint32_t frag_shader_f(vlibc_vec2d frag_pos, vlibc_rgba frag_color, vlibc_
 }
 
 void display() {
-	vlibc_fill(&canvas, (vlibc_rgba){255, 255, 255, 255}, &frag_shader, frag_shader_data);
+	vlibc_fill(&canvas, (vlibc_rgba){255, 255, 255, 255}, &frag_shader, &frag_shader_data);
 
 	vlibc_sdl_flush_canvas(&canvas);
 }

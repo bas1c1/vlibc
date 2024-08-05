@@ -60,6 +60,8 @@ void vlibc_sdl_flush_canvas(vlibc_canvas *canvas) {
 	SDL_RenderCopy(__vlibc_sdl_renderer, framebuffer , NULL, NULL);
 
 	SDL_RenderPresent(__vlibc_sdl_renderer);
+
+	SDL_DestroyTexture(framebuffer);
 }
 
 void vlibc_sdl_start(void (*display_function)()) {
