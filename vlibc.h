@@ -1540,7 +1540,7 @@ void vlibc_filled_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d p
 
 					color = vlibc_hex_to_rgba(shader->func(p, ncolor, shader_data));
 				}
-				__vlibc_fast_put_pixel(vlibcc, color, p);
+				if (color.a != 0) __vlibc_fast_put_pixel(vlibcc, color, p);
 			}
 		}
 	}
