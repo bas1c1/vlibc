@@ -2,8 +2,8 @@
 #define SDL_MAIN_HANDLED
 #include "vlibc_sdl.h"
 
-#define WIDTH 800
-#define HEIGHT 600
+#define WIDTH 300
+#define HEIGHT 300
 
 vlibc_shader_data_t frag_shader_data;
 vlibc_fragment_shader_t frag_shader;
