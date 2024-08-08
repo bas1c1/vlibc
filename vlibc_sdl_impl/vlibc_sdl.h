@@ -54,7 +54,7 @@ void vlibc_sdl_create_window(char *window_name, int width, int height) {
 
 void vlibc_sdl_flush_canvas(vlibc_canvas *canvas) {
 	SDL_Point tex_size;
-	SDL_QueryTexture(__vlibc_sdl_framebuffer, NULL, NULL, &tex_size.x, &tex_size.y);
+    SDL_QueryTexture(__vlibc_sdl_framebuffer, NULL, NULL, &tex_size.x, &tex_size.y);
 
 	if (tex_size.x != canvas->size.x || tex_size.y != canvas->size.y) {
 		SDL_DestroyTexture(__vlibc_sdl_framebuffer);
@@ -83,10 +83,10 @@ void vlibc_sdl_start(void (*display_function)()) {
 		display_function();
 
 		vlibc_sdl_deltaTime = clock() - current_ticks;
-		if(vlibc_sdl_deltaTime > 0)
-			fps = CLOCKS_PER_SEC / vlibc_sdl_deltaTime;
+    	if(vlibc_sdl_deltaTime > 0)
+        	fps = CLOCKS_PER_SEC / vlibc_sdl_deltaTime;
 
-		printf("FPS: %d\n", fps);
+        printf("FPS: %d\n", fps);
 
 		if (__vlibc_sdl_time >= (uint64_t)-1)
 			__vlibc_sdl_time = 0;
