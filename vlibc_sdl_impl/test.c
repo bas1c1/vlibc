@@ -9,105 +9,205 @@ vlibc_shader_data_t frag_shader_data;
 vlibc_fragment_shader_t frag_shader;
 vlibc_canvas canvas;
 
-const int MAX_MARCHING_STEPS = 255;
-const float MIN_DIST = 0.0;
-const float MAX_DIST = 100.0;
-const float PRECISION = 0.001;
-
-float sdSphere(vlibc_vec3d p, float r ) {
-	return vlibc_length3(p) - r;
-}
-
-float rayMarch(vlibc_vec3d ro, vlibc_vec3d rd, float start, float end) {
-	float depth = start;
-
-	for (int i = 0; i < MAX_MARCHING_STEPS; i++) {
-		vlibc_vec3d p; 
-		p.x = ro.x + depth * rd.x;
-		p.y = ro.y + depth * rd.y;
-		p.z = ro.z + depth * rd.z;
-		float d = sdSphere(p, 1);
-		depth += d;
-		if (d < PRECISION || depth > end) break;
-	}
-
-	return depth;
-}
-
-vlibc_vec3d calcNormal(vlibc_vec3d p) {
-    vlibc_vec2d e = (vlibc_vec2d){1.0 * 0.0005, -1.0 * 0.0005};
-    float r = 1;
-
-    vlibc_vec3d xyy = {e.x, e.y, e.y};
-    vlibc_vec3d yyx = {e.y, e.y, e.x};
-    vlibc_vec3d yxy = {e.y, e.x, e.y};
-    vlibc_vec3d xxx = {e.x, e.x, e.x};
-
-    vlibc_vec3d sxyy = {e.x + p.x, e.y + p.y, e.y + p.z};
-    vlibc_vec3d syyx = {e.y + p.x, e.y + p.y, e.x + p.z};
-    vlibc_vec3d syxy = {e.y + p.x, e.x + p.y, e.y + p.z};
-    vlibc_vec3d sxxx = {e.x + p.x, e.x + p.y, e.x + p.z};
-
-    xyy.x *= sdSphere(sxyy, r); xyy.y *= sdSphere(sxyy, r); xyy.z *= sdSphere(sxyy, r);
-    yyx.x *= sdSphere(syyx, r); yyx.y *= sdSphere(syyx, r); yyx.z *= sdSphere(syyx, r);
-    yxy.x *= sdSphere(syxy, r); yxy.y *= sdSphere(syxy, r); yxy.z *= sdSphere(syxy, r);
-    xxx.x *= sdSphere(sxxx, r); xxx.y *= sdSphere(sxxx, r); xxx.z *= sdSphere(sxxx, r);
-
-    vlibc_vec3d f = VLIBC_VEC3D_NULL;
-    f.x += xyy.x + yyx.x + yxy.x + xxx.x;
-    f.y += xyy.y + yyx.y + yxy.y + xxx.y;
-    f.z += xyy.z + yyx.z + yxy.z + xxx.z;
-
-    return vlibc_normalize3(f);
-}
+float* depth_buffer;
 
 vlibc_uint32_t frag_shader_f(vlibc_vec2d frag_pos, vlibc_rgba frag_color, vlibc_shader_data_t *data) {
-	vlibc_vec2d uv = vlibc_calc_uv(frag_pos, canvas.size);
-	vlibc_vec3d final_col = VLIBC_VEC3D_NULL;
-
-	vlibc_vec3d ro = (vlibc_vec3d){0, 0, 3};
-	vlibc_vec3d rd = vlibc_normalize3((vlibc_vec3d){uv.x, uv.y, -1});
-
-	float d = rayMarch(ro, rd, MIN_DIST, MAX_DIST);
-
-	if (d > MAX_DIST) {
-		final_col = (vlibc_vec3d){0.6*255, 0.6*255, 0.6*255};
-	} else {
-		vlibc_vec3d p; 
-		p.x = ro.x + rd.x * d;
-		p.y = ro.y + rd.y * d;
-		p.z = ro.z + rd.z * d;
-		vlibc_vec3d normal = calcNormal(p);
-		vlibc_vec3d lightPosition = (vlibc_vec3d){2, -4, 7};
-		vlibc_vec3d lightDirection = vlibc_normalize3((vlibc_vec3d){lightPosition.x - p.x, lightPosition.y - p.y, lightPosition.z - p.z});
-
-		float dif = vlibc_clamp(vlibc_dot3(normal, lightDirection), 0.3, 1.);
-
-		final_col.x = dif * 255;
-		final_col.y = dif * 255 * 0.58;
-		final_col.z = dif * 255 * 0.29;
+	int depthBufferIndex = WIDTH * frag_pos.y + frag_pos.x;
+	float currentDepth = depth_buffer[depthBufferIndex];
+	vlibc_f_rgba *passthrough_data = data->passthrough_data;
+	float fragDepth = passthrough_data[2].r;
+	if (fragDepth >= currentDepth) {
+		return vlibc_rgba_to_hex((vlibc_rgba){0, 0, 0, 0});
 	}
 
-	return vlibc_rgba_to_hex((vlibc_rgba){final_col.x, final_col.y, final_col.z, 255});
+	depth_buffer[depthBufferIndex] = fragDepth;
+
+	vlibc_vec3d result = (vlibc_vec3d){0, 0, 0}; 
+
+	vlibc_vec3d fragPos = (vlibc_vec3d){
+		passthrough_data[1].r, passthrough_data[1].g, passthrough_data[1].b
+	};
+
+	float ambient = 0.06f;
+	vlibc_vec3d lightColor = (vlibc_vec3d){VLIBC_ABS(float, vlibc_cos(__vlibc_sdl_time * 0.01f)), VLIBC_ABS(float, vlibc_sin(__vlibc_sdl_time * 0.01f)), 1};
+	vlibc_vec3d lightPos = (vlibc_vec3d){vlibc_sin(__vlibc_sdl_time * 0.01f) * 1.5f, vlibc_cos(__vlibc_sdl_time * 0.01f) * 1.5f, 2};
+
+	vlibc_vec3d normal = vlibc_vec3d_normalize((vlibc_vec3d){passthrough_data[0].r, passthrough_data[0].g, passthrough_data[0].b});
+	vlibc_vec3d lightDir = vlibc_vec3d_normalize(vlibc_sub_vec3d(lightPos, fragPos));
+	float diff = VLIBC_MAX(vlibc_vec3d_dot(normal, lightDir), 0.0);
+	diff = VLIBC_MAX(ambient, diff);
+	vlibc_vec3d diffuse = (vlibc_vec3d){diff, diff, diff};
+	diffuse = vlibc_mul_vec3d(diffuse, lightColor);
+
+	float specularIntensity = 0.5;
+	vlibc_vec3d viewDir = vlibc_vec3d_normalize(vlibc_sub_vec3d((vlibc_vec3d){0, 0, 0}, fragPos));
+	vlibc_vec3d reflectDir = vlibc_vec3d_reflect(vlibc_vec3d_negate(lightDir), normal);
+	float spec = vlibc_pow(VLIBC_MAX(vlibc_vec3d_dot(viewDir, reflectDir), 0.0), 8);
+	vlibc_vec3d specular = vlibc_mul_vec3d((vlibc_vec3d){specularIntensity * spec, specularIntensity * spec, specularIntensity * spec}, lightColor);
+
+	result = vlibc_add_vec3d(diffuse, specular);
+
+	result.x = VLIBC_ABS(float, result.x);
+	result.y = VLIBC_ABS(float, result.y);
+	result.z = VLIBC_ABS(float, result.z);
+
+	return vlibc_rgba_to_hex(vlibc_f_rgba_to_rgba((vlibc_f_rgba) {
+		(result.x) * 255, (result.y) * 255, (result.z) * 255, 255
+	}));
 }
 
+vlibc_mat4_t perspective;
+
 void display() {
-	vlibc_fill(&canvas, (vlibc_rgba){255, 255, 255, 255}, &frag_shader, &frag_shader_data);
+	memset(canvas.pixels, vlibc_rgba_to_hex((vlibc_rgba) {0, 0, 0, 255}), WIDTH * HEIGHT * sizeof(uint32_t));
+
+	for (int i = 0; i < WIDTH * HEIGHT; i++) {
+						  /*FLT_MAX*/
+		depth_buffer[i] = 3.40282346638528859812e+38F;
+	}
+
+	// cube vertices stolen from learnopengl
+	static float vertices[] = {
+	   -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+
+		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+
+		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+
+		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+
+		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+		 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+
+		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+		 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+	};
+
+#define attributesCount 3
+#define floatsPerElement 6
+#define elementsCount sizeof(vertices) / sizeof(float) / floatsPerElement
+	static vlibc_vertex transformedVertices[elementsCount] = {};
+	static vlibc_f_rgba staticAttributes[elementsCount * attributesCount];
+
+
+	vlibc_mat4_t transformation = vlibc_mat4_identity();
+	transformation = vlibc_mat4_scaling((vlibc_vec3d) {0.6f, 0.6f, 0.6f});
+	transformation = vlibc_mat4_mul(vlibc_mat4_rotation(__vlibc_sdl_time * VLIBC_DEG2RAD * 0.5f, (vlibc_vec3d){1, 1, 1}), transformation);
+	transformation = vlibc_mat4_mul(vlibc_mat4_translation((vlibc_vec3d) {0, 0, -2.5}), transformation);
+
+	for (int i = 0; i < elementsCount * floatsPerElement; i += floatsPerElement) {
+		int elementIndex = i / floatsPerElement;
+		vlibc_vertex* currentVertex = &transformedVertices[elementIndex];
+
+		vlibc_f_rgba* attributes = &staticAttributes[elementIndex * attributesCount];
+
+		float* position = &vertices[i];
+		float position4[] = {
+			position[0], position[1], position[2], 1
+		};
+
+		currentVertex->col_count = attributesCount;
+		currentVertex->col = attributes;
+		vlibc_vec3d perspectivePosition = vlibc_mat4_mul_pos(vlibc_mat4_mul(perspective, transformation), (vlibc_vec3d){position[0], position[1], position[2]});
+		position4[0] = perspectivePosition.x;
+		position4[1] = perspectivePosition.y;
+		position4[2] = perspectivePosition.z;
+
+		vlibc_vec3d normal = (vlibc_vec3d){
+			vertices[i + 3], vertices[i + 4], vertices[i + 5]
+		};
+
+		vlibc_vec3d multiplied = vlibc_mat4_mul_dir(transformation, normal);
+
+		attributes[0] = 
+			(vlibc_f_rgba){
+				multiplied.x, multiplied.y, multiplied.z, 255
+			};
+		attributes[1] = (vlibc_f_rgba) {
+			position4[0], position4[1], position4[2], 255
+		};
+		attributes[2] = (vlibc_f_rgba) {vlibc_linearize_depth(perspectivePosition.z, 0.01f, 10.0f), 0, 0, 0};
+
+
+		currentVertex->pos = (vlibc_vec2d) {
+			position4[0],
+			position4[1]
+		};
+		currentVertex->pos = (vlibc_vec2d) {
+			(currentVertex->pos.x + 0.5) * WIDTH,
+			(currentVertex->pos.y + 0.5) * HEIGHT
+		};
+	}
+
+
+	vlibc_f_rgba frag_shader_passthrough_data[attributesCount] = {};
+
+
+	vlibc_vertex drawnVertices[elementsCount] = {};
+	int drawnTriangles = 0;
+	for (int i = 0; i < elementsCount; i += 3) {
+		vlibc_vertex currentVertex1 = transformedVertices[i];
+		vlibc_vertex currentVertex2 = transformedVertices[i + 1];
+		vlibc_vertex currentVertex3 = transformedVertices[i + 2];
+		int mustContinue = 0;
+		if (drawnTriangles) {
+			for (int j = 0; j < drawnTriangles; j += 3) {
+				vlibc_vertex testVertex1 = drawnVertices[j];
+				vlibc_vertex testVertex2 = drawnVertices[j + 1];
+				vlibc_vertex testVertex3 = drawnVertices[j + 2];
+				if (vlibc_vertex_equal(currentVertex1, testVertex1) && vlibc_vertex_equal(currentVertex2, testVertex2) && vlibc_vertex_equal(currentVertex3, testVertex3)) {
+					mustContinue = 1;
+					break;
+				}
+			}
+		}
+		if (mustContinue) continue;
+		frag_shader_data.passthrough_data = frag_shader_passthrough_data;
+		vlibc_filled_triangle(&canvas, (vlibc_rgba){0, 0, 0, 255}, (vlibc_vec2d){0, 0}, &transformedVertices[i], &frag_shader, &frag_shader_data);
+		drawnVertices[drawnTriangles++] = currentVertex1;
+		drawnVertices[drawnTriangles++] = currentVertex2;
+		drawnVertices[drawnTriangles++] = currentVertex3;
+	}
 
 	vlibc_sdl_flush_canvas(&canvas);
 }
 
 int main(int argc, char *argv[]) {
-	float data[] = {
-		255, 255, 255, 255,
-		0, 255, 0, 255,
-		0, 0, 255, 255
-	};
-
+	frag_shader_data = vlibc_create_shader_data(vlibc_nullptr, 0, vlibc_nullptr);
 	frag_shader = vlibc_create_fragment_shader(frag_shader_f);
-	frag_shader_data = vlibc_create_shader_data(data, 12);
 
 	canvas = vlibc_sdl_alloc_canvas((vlibc_vec2d){WIDTH, HEIGHT});
+
+	perspective = vlibc_mat4_perspective(60.0f, (float) WIDTH / (float) HEIGHT, 0.01f, 10.0f);
+	depth_buffer = malloc(WIDTH * HEIGHT * sizeof(float));
 
 	vlibc_sdl_create_window("test", WIDTH, HEIGHT);
 	vlibc_sdl_start(display);

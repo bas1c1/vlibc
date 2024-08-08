@@ -1,10 +1,10 @@
 #define __VLIBC_IMPL__
+#include "../vlibc.h"
 #include <stdio.h>
 #include <stdlib.h>
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #endif
-#include "../vlibc.h"
 
 #ifndef __VLIBC_CONSOLE__
 #define __VLIBC_CONSOLE__
