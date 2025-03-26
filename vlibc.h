@@ -28,6 +28,7 @@ enum { false, true };
 
 #define vlibc_nullptr ((void*)VLIBC_NULL)
 
+#define VLIBC_EXP 2.7182818284590452353
 #define VLIBC_PI 3.141592653589793
 #define VLIBC_HALF_PI 1.570796326794897
 #define VLIBC_DOUBLE_PI 6.283185307179586
@@ -36,6 +37,7 @@ enum { false, true };
 #define VLIBC_RAD2DEG (180.f / VLIBC_PI)
 #define VLIBC_DEG2RAD  (VLIBC_PI / 180.f)
 #define VLIBC_INT_MAX 2147483647
+#define VLIBC_GAMMA_MAGIC 11.889098
 
 typedef struct {
   float x, y;
@@ -113,13 +115,19 @@ VLIBCDEF float vlibc_clamp(float x, float a, float b);
 VLIBCDEF float vlibc_saturate(float x);
 VLIBCDEF float vlibc_smoothstep(float a, float b, float x);
 VLIBCDEF int vlibc_step(float x, float num);
+VLIBCDEF double vlibc_expf(double x);
+VLIBCDEF double vlibc_log(double a);
 VLIBCDEF double vlibc_pow(double a, int b);
+VLIBCDEF double vlibc_powf(double a, double b);
+VLIBCDEF double vlibc_gamma(double x);
 VLIBCDEF VLIBC_LL vlibc_fact(VLIBC_LL x);
+VLIBCDEF double vlibc_fmod(double x, double y);
 VLIBCDEF double vlibc_sin(double x);
 VLIBCDEF double vlibc_cos(double x);
 VLIBCDEF double vlibc_tan(double x);
 VLIBCDEF float vlibc_rsqrt(float x);
 VLIBCDEF float vlibc_sqrt(float x);
+VLIBCDEF float vlibc_sqrt_apprx(float x);
 VLIBCDEF bool vlibc_in_bounds(vlibc_canvas *vlibcc, vlibc_vec2d p);
 
 /*vector functions*/
@@ -324,9 +332,32 @@ int vlibc_step(float x, float num) {
   return x > num ? 0 : 1;
 }
 
+double vlibc_expf(double x) {
+  const float c1 = 0.007972914726F;
+  const float c2 = 0.1385283768F;
+  const float c3 = 2.885390043F;
+  const float c4 = 1.442695022F;      
+  x *= c4;
+  int intPart = (int)x;
+  x -= intPart;
+  float xx = x * x;
+  float a = x + c1 * xx * x;
+  float b = c3 + c2 * xx;
+  float res = (b + a) / (b - a);
+  res *= 1 << intPart;
+  return res;
+}
+
+double vlibc_log(double a) {
+  union { double d; int x[2]; } u = { a };
+  return (u.x[1] - 1072632447) * 6.610368362777016e-7;
+}
+
 double vlibc_pow(double a, int b) {
   double result = 1;
 
+  if (a == 2) return 1 << b;
+  
   while (b){
     if (b & 1){
       result *= a;
@@ -336,6 +367,22 @@ double vlibc_pow(double a, int b) {
   }
 
   return result;
+}
+
+double vlibc_powf(double a, double b) {
+  if (a < 0 && b != (int)b) {
+    return -1;
+  }
+
+  if (b == (int)b) {
+    return vlibc_pow(a, (int)b);
+  }
+
+  return vlibc_expf(b*vlibc_log(a));
+}
+
+double vlibc_gamma(double x) {
+  return (vlibc_sqrt(2 * VLIBC_PI * x) * vlibc_pow(x, x) / vlibc_pow(VLIBC_EXP, x)) * (1 + 1/(VLIBC_GAMMA_MAGIC*x));
 }
 
 VLIBC_LL vlibc_fact(VLIBC_LL x) {
@@ -360,7 +407,11 @@ VLIBC_LL vlibc_fact(VLIBC_LL x) {
   return r << c;
 }
 
-/*i know this is super weird but it very fast*/
+double vlibc_fmod(double x, double y) {
+  if (y == 0) return -1;
+  return VLIBC_ABS(double, x) - (VLIBC_LL)(x/y) * VLIBC_ABS(double, y);
+}
+
 double vlibc_sin(double x) {
   x *= 0.63661977236758134308;
   int sign = x < 0.0;
@@ -419,7 +470,14 @@ double vlibc_cos(double x) {
 }
 
 double vlibc_tan(double x) {
-  return vlibc_sin(x)/vlibc_cos(x);
+  x = vlibc_fmod(x, VLIBC_PI);
+  if (x > VLIBC_HALF_PI) {
+      x -= VLIBC_PI;
+  } else if (x < -VLIBC_HALF_PI) {
+      x += VLIBC_PI;
+  }
+  const double x2 = x * x;
+  return x * (1 + x2 * (0.3333333333 + x2 * (0.1333333333 + x2 * (0.05396825396))));
 }
 
 float vlibc_rsqrt(float x) {
@@ -436,6 +494,10 @@ float vlibc_rsqrt(float x) {
 }
 
 float vlibc_sqrt(float x) {
+  return 1/vlibc_rsqrt(x);
+}
+
+float vlibc_sqrt_apprx(float x) {
   unsigned int i = *(unsigned int*) &x;
   i  += 127 << 23;
   i >>= 1;
@@ -1539,44 +1601,44 @@ void vlibc_filled_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d p
       vlibc_vec2d p = {x, y};
 
       if ( (s >= 0) && (t >= 0) && (s + t <= 1)) {
-	if (shader) {
-	  float e0 = vlibc_edge(p3.pos, p2.pos, p);
-	  float e1 = vlibc_edge(p1.pos, p3.pos, p);
-	  float e2 = vlibc_edge(p2.pos, p1.pos, p);
+        if (shader) {
+          float e0 = vlibc_edge(p3.pos, p2.pos, p);
+          float e1 = vlibc_edge(p1.pos, p3.pos, p);
+          float e2 = vlibc_edge(p2.pos, p1.pos, p);
 
-	  float w0 = e0 / area;
-	  float w1 = e1 / area;
-	  float w2 = e2 / area;
+          float w0 = e0 / area;
+          float w1 = e1 / area;
+          float w2 = e2 / area;
 
-	  float r = w0 * p1.col[0].r + w1 * p2.col[0].r + w2 * p3.col[0].r;
-	  float g = w0 * p1.col[0].g + w1 * p2.col[0].g + w2 * p3.col[0].g;
-	  float b = w0 * p1.col[0].b + w1 * p2.col[0].b + w2 * p3.col[0].b;
+          float r = w0 * p1.col[0].r + w1 * p2.col[0].r + w2 * p3.col[0].r;
+          float g = w0 * p1.col[0].g + w1 * p2.col[0].g + w2 * p3.col[0].g;
+          float b = w0 * p1.col[0].b + w1 * p2.col[0].b + w2 * p3.col[0].b;
 
-	  if (shader_data->passthrough_data) {
-	    for (int i = 0; i < p1.col_count; i++) {
-	      vlibc_f_rgba p1_target_color = p1.col[i];
-	      vlibc_f_rgba p2_target_color = p2.col[i];
-	      vlibc_f_rgba p3_target_color = p3.col[i];
+          if (shader_data->passthrough_data) {
+            for (int i = 0; i < p1.col_count; i++) {
+              vlibc_f_rgba p1_target_color = p1.col[i];
+              vlibc_f_rgba p2_target_color = p2.col[i];
+              vlibc_f_rgba p3_target_color = p3.col[i];
 
 
-	      float r = w0 * p1_target_color.r + w1 * p2_target_color.r + w2 * p3_target_color.r;
-	      float g = w0 * p1_target_color.g + w1 * p2_target_color.g + w2 * p3_target_color.g;
-	      float b = w0 * p1_target_color.b + w1 * p2_target_color.b + w2 * p3_target_color.b;
-	      float a = w0 * p1_target_color.a + w1 * p2_target_color.a + w2 * p3_target_color.a;
+              float r = w0 * p1_target_color.r + w1 * p2_target_color.r + w2 * p3_target_color.r;
+              float g = w0 * p1_target_color.g + w1 * p2_target_color.g + w2 * p3_target_color.g;
+              float b = w0 * p1_target_color.b + w1 * p2_target_color.b + w2 * p3_target_color.b;
+              float a = w0 * p1_target_color.a + w1 * p2_target_color.a + w2 * p3_target_color.a;
 
-	      shader_data->passthrough_data[i] = (vlibc_f_rgba){r, g, b, a};
-	    }
-	  }
-	  ncolor = (vlibc_rgba) {
-	    .r = r,
-	    .g = g,
-	    .b = b,
-	    .a = color.a
-	  };
+              shader_data->passthrough_data[i] = (vlibc_f_rgba){r, g, b, a};
+            }
+          }
+          ncolor = (vlibc_rgba) {
+            .r = r,
+            .g = g,
+            .b = b,
+            .a = color.a
+          };
 
-	  color = vlibc_hex_to_rgba(shader->func(p, ncolor, shader_data));
-	}
-	if (color.a != 0) __vlibc_fast_put_pixel(vlibcc, color, p);
+          color = vlibc_hex_to_rgba(shader->func(p, ncolor, shader_data));
+        }
+        if (color.a != 0) __vlibc_fast_put_pixel(vlibcc, color, p);
       }
     }
   }

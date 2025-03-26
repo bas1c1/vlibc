@@ -1,0 +1,1 @@
+gcc test.c -I ../sdl2/include/ -L ../sdl2/bin/ -lSDL2 -O3 -ffast-math -fno-math-errno

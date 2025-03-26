@@ -1,0 +1,5 @@
+{
+    "files.associations": {
+        "vlibc_console.h": "c"
+    }
+}
