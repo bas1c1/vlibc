@@ -1,4 +1,5 @@
 #define __VLIBC_IMPL__
+#define VLIBC_FONTS
 #include "../vlibc.h"
 #include <stdio.h>
 #include <stdlib.h>

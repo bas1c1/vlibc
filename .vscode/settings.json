@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "vlibc_console.h": "c"
+        "vlibc_console.h": "c",
+        "vlibc_sdl.h": "c",
+        "sdl.h": "c"
     }
 }
