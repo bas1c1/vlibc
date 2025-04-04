@@ -1,4 +1,5 @@
 #define __VLIBC_IMPL__
+#define VLIBC_FONTS
 #include "../vlibc.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,7 +28,10 @@ vlibc_canvas vlibc_console_alloc_canvas(vlibc_vec2d size) {
 
   vlibc_canvas canvas = {
     .pixels = graph,
-    .size = size
+    .offsize = size,
+    .size = size,
+    .offx = 0,
+    .offy = 0
   };
 
   return canvas;

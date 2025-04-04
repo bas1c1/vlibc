@@ -1,8 +1,8 @@
 #define __VLIBC_CONSOLE_IMPL__
 #include "vlibc_console.h"
 
-#define WIDTH 25
-#define HEIGHT 25
+#define WIDTH 20
+#define HEIGHT 10
 
 static vlibc_uint64_t __vlibc_console_time = 0;
 

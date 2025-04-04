@@ -1,4 +1,5 @@
 #define __VLIBC_IMPL__
+#define VLIBC_FONTS
 #include "../vlibc.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +47,10 @@ vlibc_canvas vlibc_windows_alloc_canvas(vlibc_vec2d size) {
 
   vlibc_canvas canvas = {
     .pixels = graph,
-    .size = size
+    .offsize = size,
+    .size = size,
+    .offx = 0,
+    .offy = 0
   };
 
   return canvas;
@@ -92,7 +96,7 @@ void vlibc_windows_start(void (*display_function)()) {
   while (true) {
     if(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
       if (msg.message == WM_QUIT) {
-	break;
+  break;
       }
 
       TranslateMessage(&msg);
@@ -133,7 +137,7 @@ LRESULT CALLBACK __vlibc_windows_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
     __vlibc_windows_hdcc = CreateCompatibleDC(hWinDC);
     __vlibc_windows_bm = CreateCompatibleBitmap(hWinDC, __vlibc_windows_width, __vlibc_windows_height); 
     SetBitmapBits(__vlibc_windows_bm, __vlibc_windows_height * __vlibc_windows_width * sizeof(vlibc_uint32_t), (const void*)(__vlibc_windows_canvas->pixels));
-			
+      
     SelectObject(__vlibc_windows_hdcc, __vlibc_windows_bm);
     ReleaseDC(hwnd, hWinDC);
     break;
