@@ -3,10 +3,10 @@
 #include "../vlibc.h"
 #include <stdio.h>
 #include <stdlib.h>
-#if defined(_WIN32) || defined(_WIN64)
-#include <windows.h>
 #include <stdint.h>
 #include <time.h>
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
 #endif
 
 #ifndef __VLIBC_CONSOLE__
