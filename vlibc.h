@@ -1615,7 +1615,10 @@ void vlibc_filled_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d p
   vlibc_vec2d vs1 = (vlibc_vec2d){p2.pos.x - p1.pos.x, p2.pos.y - p1.pos.y};
   vlibc_vec2d vs2 = (vlibc_vec2d){p3.pos.x - p1.pos.x, p3.pos.y - p1.pos.y};
 
-  vlibc_vertex nvertices[3] = {p1, p2, p3};
+  vlibc_vertex nvertices[3];
+  nvertices[0] = p1;
+  nvertices[1] = p2;
+  nvertices[2] = p3;
 
   for (int x = minX; x <= maxX; x++) {
     for (int y = minY; y <= maxY; y++) {

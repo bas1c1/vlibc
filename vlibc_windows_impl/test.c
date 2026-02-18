@@ -1,8 +1,8 @@
 #define __VLIBC_WINDOWS_IMPL__
 #include "vlibc_windows.h"
 
-#define WIDTH 280
-#define HEIGHT 260
+#define WIDTH 800
+#define HEIGHT 600
 
 vlibc_canvas canvas;
 

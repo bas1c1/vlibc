@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
+#include <stdint.h>
+#include <time.h>
 #endif
 
 #ifndef __VLIBC_CONSOLE__
@@ -20,6 +22,10 @@ VLIBCDEF void vlibc_console_clear_screen();
 #endif
 
 #ifdef __VLIBC_CONSOLE_IMPL__
+
+static float vlibc_console_deltaTime = 0;
+clock_t current_ticks;
+uint64_t fps = 0;
 
 vlibc_canvas vlibc_console_alloc_canvas(vlibc_vec2d size) {
   printf("width: %d height: %d\n", (int)size.x, (int)size.y);
@@ -73,6 +79,8 @@ char vlibc_console_character_grayscale(int gray_scale) {
 }
 
 void vlibc_console_flush_canvas(vlibc_canvas *canvas) {
+  current_ticks = clock();
+  
   vlibc_console_clear_screen();
   for (int i = 0; i < canvas->size.x; i++) {
     for (int j = 0; j < canvas->size.y; j++) {
@@ -88,7 +96,12 @@ void vlibc_console_flush_canvas(vlibc_canvas *canvas) {
 	      );
     }
   }
+  vlibc_console_deltaTime = clock() - current_ticks;
+  if(vlibc_console_deltaTime > 0)
+    fps = CLOCKS_PER_SEC / vlibc_console_deltaTime;
+
   printf("\n");
+  printf("FPS: %d\n", fps);
 }
 
 #endif
