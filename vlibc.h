@@ -1,7 +1,7 @@
 #ifndef __VLIBC__
 #define __VLIBC__
 
-#define VLIBCDEF static const
+#define VLIBCDEF static
 
 #ifdef VLIBC_FONTS
 #include "vlibc_font.h"
