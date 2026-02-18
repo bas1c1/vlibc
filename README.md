@@ -1,5 +1,10 @@
 # vlibc
-header-only no-std crossplatform simple graphics library in C
+Header-only no-std crossplatform simple graphics library in C
+
+# license
+This project is distributed under the **GNU AGPLv3** license. If you plan to use vlibc in your own (closed) software, embedded devices, or SaaS products without opening the source code, you need a commercial license.
+
+To buy one, contact me here: vlibc_development@internet.ru
 
 # building
 

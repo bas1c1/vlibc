@@ -1,3 +1,9 @@
+/*
+ * vlibc - header-only no-std crossplatform simple graphics library 
+ * Copyright (c) 2026 bas1c1
+ * Licensed under AGPLv3.
+ */
+
 #ifndef __VLIBC__
 #define __VLIBC__
 

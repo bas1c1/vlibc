@@ -1,3 +1,7 @@
+# vlibc - header-only no-std crossplatform simple graphics library 
+# Copyright (c) 2026 bas1c1
+# Licensed under AGPLv3.
+
 from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 import os
@@ -17,6 +21,11 @@ def main():
     font = ImageFont.load_default()
     
     with open(f"vlibc_font.h", "w") as f:
+        f.write('''/*
+ * vlibc - header-only no-std crossplatform simple graphics library 
+ * Copyright (c) 2026 bas1c1
+ * Licensed under AGPLv3.
+ */\n\n''')
         f.write(f"// Generated bitmap font ({font_size}x{font_size})\n")
         f.write(f"// Characters: {chars}\n\n")
         f.write(f"#ifndef VLIBC_BITMAP_FONT_H\n")
