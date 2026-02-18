@@ -5,12 +5,12 @@ header-only no-std crossplatform simple graphics library in C
 
 build command for sdl_impl:
 ```
-gcc test.c -lSDL2 -O3 -ffast-math -fno-math-errno
+gcc test.c -lSDL2 -O3 -ffast-math -fno-math-errno -std=c99
 ```
 
 build command for console_impl:
 ```
-gcc test.c -O3 -ffast-math -fno-math-errno
+gcc test.c -O3 -ffast-math -fno-math-errno -std=c99
 ```
 
 # examples
