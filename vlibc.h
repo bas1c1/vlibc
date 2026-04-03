@@ -23,7 +23,15 @@ typedef long unsigned int vlibc_size_t;
 
 #ifndef bool
 typedef int bool;
-enum { false, true };
+
+#ifndef false
+#define false 0
+#endif
+
+#ifndef true
+#define true 1
+#endif
+
 #endif
 
 #define VLIBC_MIN(a,b) (((a)<(b))?(a):(b))
@@ -876,12 +884,12 @@ bool vlibc_vertex_equal(vlibc_vertex a, vlibc_vertex b) {
 }
 
 vlibc_mat4_t vlibc_mat4(float m00, float m10, float m20, float m30, float m01, float m11, float m21, float m31, float m02, float m12, float m22, float m32, float m03, float m13, float m23, float m33) {
-  return (vlibc_mat4_t) {
-    .m[0][0] = m00, .m[1][0] = m10, .m[2][0] = m20, .m[3][0] = m30,
-    .m[0][1] = m01, .m[1][1] = m11, .m[2][1] = m21, .m[3][1] = m31,
-    .m[0][2] = m02, .m[1][2] = m12, .m[2][2] = m22, .m[3][2] = m32,
-    .m[0][3] = m03, .m[1][3] = m13, .m[2][3] = m23, .m[3][3] = m33
-  };
+  vlibc_mat4_t result;
+  result.m[0][0] = m00; result.m[1][0] = m10; result.m[2][0] = m20; result.m[3][0] = m30;
+  result.m[0][1] = m01; result.m[1][1] = m11; result.m[2][1] = m21; result.m[3][1] = m31;
+  result.m[0][2] = m02; result.m[1][2] = m12; result.m[2][2] = m22; result.m[3][2] = m32;
+  result.m[0][3] = m03; result.m[1][3] = m13; result.m[2][3] = m23; result.m[3][3] = m33;
+  return result;
 }
 
 vlibc_mat4_t vlibc_mat4_identity() {
@@ -1681,8 +1689,12 @@ void vlibc_filled_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d p
 
 void vlibc_filled_figure(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, vlibc_vertex *vertices, int num_of_vertices, vlibc_fragment_shader_t *shader, vlibc_shader_data_t *shader_data) {
   if (vlibcc == vlibc_nullptr) return;
-  for (vlibc_size_t i = 0; i+2 < num_of_vertices; i++) {
-    vlibc_filled_triangle(vlibcc, color, pos, vertices+i, shader, shader_data);
+  for (vlibc_size_t i = 0; i + 2 < num_of_vertices; i++) {
+    vlibc_vertex triangle_vertices[3];
+    triangle_vertices[0] = vertices[0];
+    triangle_vertices[1] = vertices[i + 1];
+    triangle_vertices[2] = vertices[i + 2];
+    vlibc_filled_triangle(vlibcc, color, pos, triangle_vertices, shader, shader_data);
   }
 }
 
@@ -1711,14 +1723,12 @@ void vlibc_text(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, short t
 }
 
 vlibc_canvas vlibc_create_subbuffer(vlibc_canvas* vlibcc, vlibc_vec2d pos, vlibc_vec2d size) {
-  vlibc_canvas canvas = {
-    .pixels = vlibcc->pixels,
-    .size = vlibcc->size,
-    .offsize = size,
-    .offx = pos.x,
-    .offy = pos.y
-  };
-
+  vlibc_canvas canvas;
+  canvas.pixels = vlibcc->pixels;
+  canvas.size = vlibcc->size;
+  canvas.offsize = size;
+  canvas.offx = pos.x;
+  canvas.offy = pos.y;
   return canvas;
 }
 
