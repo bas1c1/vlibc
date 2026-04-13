@@ -1,4 +1,6 @@
 import serial
+import os
+os.system('') #magic thing that makes print work good
 
 # --- SETTINGS ---
 # Change 'COM3' to your port (e.g., '/dev/ttyUSB0' on Linux/Mac)
