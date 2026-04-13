@@ -1,10 +1,12 @@
+# vlibc - header-only no-std crossplatform simple graphics library 
+# Copyright (c) 2026 bas1c1
+# Licensed under AGPLv3.
+
 import serial
-import os
-os.system('') #magic thing that makes print work good
 
 # --- SETTINGS ---
 # Change 'COM3' to your port (e.g., '/dev/ttyUSB0' on Linux/Mac)
-SERIAL_PORT = 'COM3' 
+SERIAL_PORT = 'COM5' 
 BAUD_RATE = 115200
 # ----------------
 

@@ -8,6 +8,11 @@ To buy one, contact me here: vlibc_development@internet.ru
 
 # building
 
+build command for windows_impl:
+```
+gcc test.c -lgdi32 -O3 -ffast-math -fno-math-errno -std=c99
+```
+
 build command for sdl_impl:
 ```
 gcc test.c -lSDL2 -O3 -ffast-math -fno-math-errno -std=c99
@@ -17,6 +22,21 @@ build command for console_impl:
 ```
 gcc test.c -O3 -ffast-math -fno-math-errno -std=c99
 ```
+
+how to build arduino_impl:
+
+1. Open ArduinoIDE
+2. Create new project
+3. Copy all the files you need in project folder (sketch_test.ino, vlibc_arduino_serial.h, vlibc.h, vlibc_font.h)
+4. Fix the imports (just change the 10th line of vlibc_arduino_serial.h from `#include "../vlibc.h"` to `#include "vlibc.h"`)
+5. Click "Upload" button
+
+how to test arduino_impl:
+
+1. Open the listener.py
+2. Change serial port to your port
+3. Run the listener.py
+4. Enjoy :)
 
 # examples
 
