@@ -1711,16 +1711,6 @@ void vlibc_filled_triangle(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d p
   }
 }
 
-void vlibc_figure(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, vlibc_vertex *vertices, int num_of_vertices, vlibc_fragment_shader_t *shader, vlibc_shader_data_t *shader_data) {
-  if (vlibcc == vlibc_nullptr) return;
-  // Conv_c is unused, remove it or ignore it.
-  for (vlibc_size_t i = 0; i < num_of_vertices; i++) {
-    // Calculate the next vertex index with modulo to wrap around
-    vlibc_size_t next_i = (i + 1) % num_of_vertices;
-    vlibc_line(vlibcc, color, vertices[i].pos, vertices[next_i].pos, shader, shader_data);
-  }
-}
-
 void vlibc_filled_figure(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, vlibc_vertex *vertices, int num_of_vertices, vlibc_fragment_shader_t *shader, vlibc_shader_data_t *shader_data) {
   if (vlibcc == vlibc_nullptr) return;
   for (vlibc_size_t i = 0; i + 2 < num_of_vertices; i++) {
