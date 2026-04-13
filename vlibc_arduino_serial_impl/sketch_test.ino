@@ -6,7 +6,6 @@
 
 #define VLIBC_FONTS
 #define __VLIBC_ARDUINO_SERIAL__
-#include "../vlibc.h"
 #include "vlibc_arduino_serial.h"
 
 #define WIDTH 21
@@ -21,7 +20,7 @@ void setup() {
 }
 
 void loop() {
-  current_angle += 0.02f;
+  current_angle += 0.05f;
 
   vlibc_fill(&canvas, (vlibc_rgba){0, 0, 0, 255}, vlibc_nullptr, vlibc_nullptr);
 
