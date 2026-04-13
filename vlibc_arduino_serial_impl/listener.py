@@ -4,7 +4,7 @@ os.system('') #magic thing that makes print work good
 
 # --- SETTINGS ---
 # Change 'COM3' to your port (e.g., '/dev/ttyUSB0' on Linux/Mac)
-SERIAL_PORT = 'COM5' 
+SERIAL_PORT = 'COM3' 
 BAUD_RATE = 115200
 # ----------------
 
