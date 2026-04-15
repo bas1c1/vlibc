@@ -491,31 +491,33 @@ double vlibc_sin(double x) {
 }
 
 double vlibc_cos(double x) {
-  if (x < 0) {
-    int q = -x / VLIBC_DOUBLE_PI;
-    q += 1;
-    double y = q * VLIBC_DOUBLE_PI;
-    x = -(x - y);
-  }
-  if (x >= VLIBC_DOUBLE_PI) {
-    int q = x / VLIBC_DOUBLE_PI;
-    double y = q * VLIBC_DOUBLE_PI;
-    x = x - y;
-  }
-  int s = 1;
-  if (x >= VLIBC_PI) {
-    s = -1;
-    x -= VLIBC_PI;
-  }
-  if (x > VLIBC_HALF_PI) {
-    x = VLIBC_PI - x;
-    s = -s;
-  }
-  double z = x * x;
-  double r = z * (z * (VLIBC_SIN_CURVE_A - VLIBC_SIN_CURVE_B * z) - 0.5) + 1.0;
-  if (r > 1.0) r = r - 2.0;
-  if (s > 0) return r;
-  else return -r;
+  x *= 0.63661977236758134308;
+  int sign = x < 0.0;
+  x = sign ? -x : x;
+  int xf = (int)x;
+  x -= xf;
+  if ((xf & 1) == 1)
+    x = 1 - x;
+  int per = (xf >> 1) & 1;
+  double y;
+  if (x <= 0.5)
+    {
+      double xx = x * x;
+      y = x * (1.5707963267948965822 + xx * (-0.6459640975062407217 +
+               xx * (0.07969262624592800593 + xx * (-0.0046817541307639977752 +
+                      xx * (0.00016044114022967599853 + xx * (-3.5986097146969802712e-6 +
+                                5.629793865626169033e-8 * xx))))));
+    }
+  else
+    {
+      x = 1.0 - x;
+      double xx = x * x;
+      y = 1.0 - xx * (1.2337005501361513498 + xx * (-0.25366950789986513871 +
+                xx * (0.020863480734953519901 + xx * (-0.0009192599500952791151 +
+                        xx * (0.000025200135454917479526 - 4.6552987291490935821e-7 * xx)))));
+    }
+  y = 1/vlibc_rsqrt(1 - (y * y));
+  return sign ^ per ? -y : y;
 }
 
 double vlibc_tan(double x) {
