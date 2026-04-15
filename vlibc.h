@@ -493,7 +493,7 @@ double vlibc_sin(double x) {
 double vlibc_cos(double x) {
   x *= 0.63661977236758134308;
   int sign = x < 0.0;
-  x = sign ? -x : x;
+  x = sign ? x : -x;
   int xf = (int)x;
   x -= xf;
   if ((xf & 1) == 1)
