@@ -1,5 +1,5 @@
 /*
- * vlibc - header-only no-std crossplatform simple graphics library 
+ * vlibc - header-only no-std crossplatform simple graphics library
  * Copyright (c) 2026 bas1c1
  * Licensed under AGPLv3.
  */
@@ -385,7 +385,7 @@ double vlibc_expf(double x) {
   const float c1 = 0.007972914726F;
   const float c2 = 0.1385283768F;
   const float c3 = 2.885390043F;
-  const float c4 = 1.442695022F;      
+  const float c4 = 1.442695022F;
   x *= c4;
   int intPart = (int)x;
   x -= intPart;
@@ -406,7 +406,7 @@ double vlibc_pow(double a, int b) {
   double result = 1;
 
   if (a == 2) return 1 << b;
-  
+
   while (b){
     if (b & 1){
       result *= a;
@@ -491,33 +491,33 @@ double vlibc_sin(double x) {
 }
 
 double vlibc_cos(double x) {
-  x *= 0.63661977236758134308;
-  int sign = x < 0.0;
-  x = sign ? x : -x;
-  int xf = (int)x;
-  x -= xf;
-  if ((xf & 1) == 1)
-    x = 1 - x;
-  int per = (xf >> 1) & 1;
-  double y;
-  if (x <= 0.5)
-    {
-      double xx = x * x;
-      y = x * (1.5707963267948965822 + xx * (-0.6459640975062407217 +
-               xx * (0.07969262624592800593 + xx * (-0.0046817541307639977752 +
-                      xx * (0.00016044114022967599853 + xx * (-3.5986097146969802712e-6 +
-                                5.629793865626169033e-8 * xx))))));
-    }
-  else
-    {
-      x = 1.0 - x;
-      double xx = x * x;
-      y = 1.0 - xx * (1.2337005501361513498 + xx * (-0.25366950789986513871 +
-                xx * (0.020863480734953519901 + xx * (-0.0009192599500952791151 +
-                        xx * (0.000025200135454917479526 - 4.6552987291490935821e-7 * xx)))));
-    }
-  y = 1/vlibc_rsqrt(1 - (y * y));
-  return sign ^ per ? -y : y;
+    x *= 0.63661977236758134308;
+    x += 1; //this works, lol
+    int sign = x < 0.0;
+    x = sign ? -x : x;
+    int xf = (int)x;
+    x -= xf;
+    if ((xf & 1) == 1)
+      x = 1 - x;
+    int per = (xf >> 1) & 1;
+    double y;
+    if (x <= 0.5)
+      {
+        double xx = x * x;
+        y = x * (1.5707963267948965822 + xx * (-0.6459640975062407217 +
+                 xx * (0.07969262624592800593 + xx * (-0.0046817541307639977752 +
+                        xx * (0.00016044114022967599853 + xx * (-3.5986097146969802712e-6 +
+                                  5.629793865626169033e-8 * xx))))));
+      }
+    else
+      {
+        x = 1.0 - x;
+        double xx = x * x;
+        y = 1.0 - xx * (1.2337005501361513498 + xx * (-0.25366950789986513871 +
+                  xx * (0.020863480734953519901 + xx * (-0.0009192599500952791151 +
+                          xx * (0.000025200135454917479526 - 4.6552987291490935821e-7 * xx)))));
+      }
+    return sign ^ per ? -y : y;
 }
 
 double vlibc_tan(double x) {
@@ -985,7 +985,7 @@ vlibc_mat4_t vlibc_mat4_rotation(float angle_in_rad, vlibc_vec3d axis) {
   vlibc_vec3d normalized_axis = vlibc_vec3d_normalize(axis);
   float x = normalized_axis.x, y = normalized_axis.y, z = normalized_axis.z;
   float c = vlibc_cos(angle_in_rad), s = vlibc_sin(angle_in_rad);
-  
+
   return vlibc_mat4(
         c + x*x*(1-c),      x*y*(1-c) - z*s,    x*z*(1-c) + y*s,  0,
         y*x*(1-c) + z*s,        c + y*y*(1-c),    y*z*(1-c) - x*s,  0,
@@ -1012,7 +1012,7 @@ vlibc_mat4_t vlibc_mat4_perspective(float vertical_field_of_view_in_deg, float a
   float f = 1.0f / vlibc_tan(fovy_in_rad / 2.0f);
   float ar = aspect_ratio;
   float nd = near_view_distance, fd = far_view_distance;
-  
+
   return vlibc_mat4(
         f / ar, 0,  0,        0,
         0,    f,  0,        0,
@@ -1025,7 +1025,7 @@ vlibc_mat4_t vlibc_mat4_look_at(vlibc_vec3d from, vlibc_vec3d to, vlibc_vec3d up
   vlibc_vec3d z = vlibc_mul_vec3df(vlibc_vec3d_normalize(vlibc_sub_vec3d(to, from)), -1);
   vlibc_vec3d x = vlibc_vec3d_normalize(vlibc_vec3d_cross(up, z));
   vlibc_vec3d y = vlibc_vec3d_cross(z, x);
-  
+
   return vlibc_mat4(
         x.x, x.y, x.z, -vlibc_vec3d_dot(from, x),
         y.x, y.y, y.z, -vlibc_vec3d_dot(from, y),
@@ -1045,7 +1045,7 @@ vlibc_mat4_t vlibc_mat4_transpose(vlibc_mat4_t matrix) {
 
 vlibc_mat4_t vlibc_mat4_mul(vlibc_mat4_t a, vlibc_mat4_t b) {
   vlibc_mat4_t result;
-  
+
   for(int i = 0; i < 4; i++) {
     for(int j = 0; j < 4; j++) {
       float sum = 0;
@@ -1055,7 +1055,7 @@ vlibc_mat4_t vlibc_mat4_mul(vlibc_mat4_t a, vlibc_mat4_t b) {
       result.m[i][j] = sum;
     }
   }
-  
+
   return result;
 }
 
@@ -1063,11 +1063,11 @@ vlibc_mat4_t vlibc_mat4_invert_affine(vlibc_mat4_t matrix) {
   float m00 = matrix.m00,  m10 = matrix.m10,  m20 = matrix.m20,  m30 = matrix.m30;
   float m01 = matrix.m01,  m11 = matrix.m11,  m21 = matrix.m21,  m31 = matrix.m31;
   float m02 = matrix.m02,  m12 = matrix.m12,  m22 = matrix.m22,  m32 = matrix.m32;
-  
+
   float c00 =   m11*m22 - m12*m21,   c10 = -(m01*m22 - m02*m21),  c20 =   m01*m12 - m02*m11;
   float c01 = -(m10*m22 - m12*m20),  c11 =   m00*m22 - m02*m20,   c21 = -(m00*m12 - m02*m10);
   float c02 =   m10*m21 - m11*m20,   c12 = -(m00*m21 - m01*m20),  c22 =   m00*m11 - m01*m10;
-  
+
   float det = m00*c00 + m10*c10 + m20 * c20;
   if (VLIBC_ABS(float, det) < 0.00001)
     return vlibc_mat4_identity();
@@ -1075,7 +1075,7 @@ vlibc_mat4_t vlibc_mat4_invert_affine(vlibc_mat4_t matrix) {
   float i00 = c00 / det,  i10 = c01 / det,  i20 = c02 / det;
   float i01 = c10 / det,  i11 = c11 / det,  i21 = c12 / det;
   float i02 = c20 / det,  i12 = c21 / det,  i22 = c22 / det;
-  
+
   return vlibc_mat4(
         i00, i10, i20,  -(i00*m30 + i10*m31 + i20*m32),
         i01, i11, i21,  -(i01*m30 + i11*m31 + i21*m32),
@@ -1090,11 +1090,11 @@ vlibc_vec3d vlibc_mat4_mul_pos(vlibc_mat4_t matrix, vlibc_vec3d position) {
     matrix.m01 * position.x + matrix.m11 * position.y + matrix.m21 * position.z + matrix.m31,
     matrix.m02 * position.x + matrix.m12 * position.y + matrix.m22 * position.z + matrix.m32
   };
-  
+
   float w = matrix.m03 * position.x + matrix.m13 * position.y + matrix.m23 * position.z + matrix.m33;
   if (w != 0 && w != 1)
     return (vlibc_vec3d){result.x / w, result.y / w, result.z / w};
-  
+
   return result;
 }
 
@@ -1104,11 +1104,11 @@ vlibc_vec3d vlibc_mat4_mul_dir(vlibc_mat4_t matrix, vlibc_vec3d direction) {
     matrix.m01 * direction.x + matrix.m11 * direction.y + matrix.m21 * direction.z,
     matrix.m02 * direction.x + matrix.m12 * direction.y + matrix.m22 * direction.z
   };
-  
+
   float w = matrix.m03 * direction.x + matrix.m13 * direction.y + matrix.m23 * direction.z;
   if (w != 0 && w != 1)
     return (vlibc_vec3d){result.x / w, result.y / w, result.z / w};
-  
+
   return result;
 }
 
@@ -1150,7 +1150,7 @@ vlibc_vec2d vlibc_calc_uv(vlibc_vec2d frag_pos, vlibc_vec2d resolution) {
 int vlibc_shader_data_parse_int(float *shader_data, int index) {
   if (shader_data == vlibc_nullptr) return -1;
   float x = *(shader_data+index);
-  return 
+  return
     x >= 0
     ?(int)(x + 0.5)
     :(int)(x - 0.5);
@@ -1291,7 +1291,7 @@ void vlibc_row(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, int widt
 void vlibc_column(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, int height, vlibc_fragment_shader_t *shader, vlibc_shader_data_t *shader_data) {
   if (vlibcc == vlibc_nullptr) return;
   vlibc_pixel_t conv_c = __vlibc_fast_convert(color);
-  
+
   if (shader) {
     for (int i = 0; i < height; i++) {
       vlibc_vec2d p = {pos.x, pos.y+i};
@@ -1402,7 +1402,7 @@ void vlibc_circle(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, int r
 
       if (d > 0)
   {
-    y--; 
+    y--;
     d = d + 4 * (x - y) + 10;
   }
       else
@@ -1731,14 +1731,14 @@ void vlibc_text(vlibc_canvas* vlibcc, vlibc_rgba color, vlibc_vec2d pos, short t
 
     int gx = pos.x;
     int gy = pos.y;
-  
+
     char c = str[i];
     int ind = __vlibc_get_font(c);
     for (int j = 0; j < VLIBC_FONT_SIZE; j++) {
       for (int k = 0; k < VLIBC_FONT_SIZE; k++) {
         int px = gx + j*text_size;
         int py = gy + k*text_size;
-        
+
         p = (vlibc_vec2d){px + i * VLIBC_FONT_SIZE * text_size, py};
 
         if (__vlibc_font[ind][k][j] == 1)
