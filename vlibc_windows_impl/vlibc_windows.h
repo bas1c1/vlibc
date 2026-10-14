@@ -129,7 +129,7 @@ void vlibc_windows_start(void (*display_function)()) {
 
 LRESULT CALLBACK __vlibc_windows_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   switch (msg){
-  case WM_CREATE:
+  case WM_CREATE: {
     HDC hWinDC = GetDC(hwnd);
 
     BITMAPINFO bmi = { 0 };
@@ -147,12 +147,14 @@ LRESULT CALLBACK __vlibc_windows_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
     SelectObject(__vlibc_windows_hdcc, __vlibc_windows_bm);
     ReleaseDC(hwnd, hWinDC);
     break;
+    }
 
-  case WM_DESTROY:
+  case WM_DESTROY: {
     DeleteDC(__vlibc_windows_hdcc);
     DeleteObject(__vlibc_windows_bm);
     PostQuitMessage(0);
     break;
+    }
   }
   return DefWindowProc(hwnd, msg, wParam, lParam);
 }
